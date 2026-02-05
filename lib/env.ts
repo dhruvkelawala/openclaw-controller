@@ -1,4 +1,5 @@
 import Constants from 'expo-constants';
+import { logger } from './logger';
 
 export const ENV = {
   BACKEND_URL:
@@ -8,8 +9,5 @@ export const ENV = {
 } as const;
 
 if (!ENV.EAS_PROJECT_ID && !__DEV__) {
-  // eslint-disable-next-line no-console
-  console.warn(
-    'EAS_PROJECT_ID not configured - push notifications may not work'
-  );
+  logger.warn('EAS_PROJECT_ID not configured - push notifications may not work');
 }

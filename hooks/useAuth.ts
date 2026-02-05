@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import * as SecureStore from 'expo-secure-store';
-import { DeviceRegistration } from '../types';
 import { ENV } from '../lib/env';
+import { logger } from '../lib/logger';
 
 const DEVICE_TOKEN_KEY = 'openclaw_device_token';
 
@@ -19,14 +19,14 @@ export function useAuth() {
         // Generate new UUID
         token = crypto.randomUUID();
         await SecureStore.setItemAsync(DEVICE_TOKEN_KEY, token);
-        console.log('Generated new device token:', token);
+        logger.log('Generated new device token:', token);
       } else {
-        console.log('Retrieved existing device token:', token);
+        logger.log('Retrieved existing device token:', token);
       }
       
       return token;
     } catch (error) {
-      console.error('Error managing device token:', error);
+      logger.error('Error managing device token:', error);
       throw error;
     }
   }, []);
@@ -44,14 +44,14 @@ export function useAuth() {
       });
 
       if (response.ok) {
-        console.log('Device registered successfully');
+        logger.log('Device registered successfully');
         return true;
-      } else {
-        console.error('Device registration failed:', response.status);
-        return false;
       }
+
+      logger.error('Device registration failed:', response.status);
+      return false;
     } catch (error) {
-      console.error('Error registering device:', error);
+      logger.error('Error registering device:', error);
       return false;
     }
   }, []);
@@ -67,7 +67,7 @@ export function useAuth() {
         const registered = await registerDevice(token);
         setIsRegistered(registered);
       } catch (error) {
-        console.error('Auth initialization error:', error);
+        logger.error('Auth initialization error:', error);
       } finally {
         setIsLoading(false);
       }

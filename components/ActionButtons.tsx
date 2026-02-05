@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
+import * as Haptics from 'expo-haptics';
 import { logger } from '../lib/logger';
 
 interface ActionButtonsProps {
@@ -15,7 +16,9 @@ export function ActionButtons({ onApprove, onReject, disabled = false }: ActionB
 
   const authenticateAndExecute = async (action: () => Promise<boolean>, actionName: string) => {
     setIsAuthenticating(true);
-    
+
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
     try {
       // Check if device supports biometric authentication
       const hasHardware = await LocalAuthentication.hasHardwareAsync();
@@ -53,8 +56,14 @@ export function ActionButtons({ onApprove, onReject, disabled = false }: ActionB
         setIsAuthenticating(false);
         setIsLoading(true);
         const success = await action();
-        if (!success) {
-          Alert.alert('Error', `Failed to ${actionName.toLowerCase()} the action. Please try again.`);
+        if (success) {
+          void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        } else {
+          void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          Alert.alert(
+            'Error',
+            `Failed to ${actionName.toLowerCase()} the action. Please try again.`
+          );
         }
         setIsLoading(false);
       } else {

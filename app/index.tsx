@@ -11,6 +11,8 @@ import { useAuth } from '../hooks/useAuth';
 import { useApprovalsQuery } from '../hooks/useApprovalsQuery';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { ApprovalCard } from '../components/ApprovalCard';
+import { BottomNav } from '../components/BottomNav';
+import { ApprovalListSkeleton } from '../components/Skeleton';
 import type { ApprovalAction } from '../types';
 
 export default function PendingApprovalsScreen() {
@@ -41,10 +43,6 @@ export default function PendingApprovalsScreen() {
 
   const navigateToHistory = () => {
     router.push('/history');
-  };
-
-  const navigateToSettings = () => {
-    router.push('/settings');
   };
 
   const isLoading = authLoading || approvalsLoading;
@@ -127,68 +125,50 @@ export default function PendingApprovalsScreen() {
       ) : null}
 
       {/* Approvals List */}
-      <FlatList<ApprovalAction>
-        data={pendingApprovals}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }: { item: ApprovalAction }) => (
-          <View className="px-4">
-            <ApprovalCard approval={item} onPress={handleApprovalPress} />
-          </View>
-        )}
-        contentContainerStyle={{ paddingTop: 8, paddingBottom: 100 }}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefetching || isLoading}
-            onRefresh={onRefresh}
-            tintColor="#ffffff"
-          />
-        }
-        ListEmptyComponent={
-          <View className="flex-1 justify-center items-center px-6 mt-20">
-            <View className="w-16 h-16 bg-zinc-900 rounded-full items-center justify-center mb-4">
-              <Text className="text-3xl">📭</Text>
+      {isLoading && pendingApprovals.length === 0 ? (
+        <ApprovalListSkeleton count={4} />
+      ) : (
+        <FlatList<ApprovalAction>
+          data={pendingApprovals}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }: { item: ApprovalAction }) => (
+            <View className="px-4">
+              <ApprovalCard approval={item} onPress={handleApprovalPress} />
             </View>
-            <Text className="text-white text-lg font-semibold mb-2">
-              No pending approvals
-            </Text>
-            <Text className="text-zinc-500 text-base text-center">
-              When actions need your approval,{"\n"}they'll appear here.
-            </Text>
-            <TouchableOpacity
-              onPress={onRefresh}
-              className="mt-6 bg-zinc-900 rounded-xl py-3 px-6"
-              activeOpacity={0.7}
-              disabled={isLoading}
-            >
-              <Text className="text-white font-medium">Refresh</Text>
-            </TouchableOpacity>
-          </View>
-        }
-      />
+          )}
+          contentContainerStyle={{ paddingTop: 8, paddingBottom: 120 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefetching}
+              onRefresh={onRefresh}
+              tintColor="#ffffff"
+            />
+          }
+          ListEmptyComponent={
+            <View className="flex-1 justify-center items-center px-6 mt-20">
+              <View className="w-16 h-16 bg-zinc-900 rounded-full items-center justify-center mb-4">
+                <Text className="text-3xl">📭</Text>
+              </View>
+              <Text className="text-white text-lg font-semibold mb-2">
+                No pending approvals
+              </Text>
+              <Text className="text-zinc-500 text-base text-center">
+                When actions need your approval,{"\n"}they'll appear here.
+              </Text>
+              <TouchableOpacity
+                onPress={onRefresh}
+                className="mt-6 bg-zinc-900 rounded-xl py-3 px-6"
+                activeOpacity={0.7}
+                disabled={isLoading}
+              >
+                <Text className="text-white font-medium">Refresh</Text>
+              </TouchableOpacity>
+            </View>
+          }
+        />
+      )}
 
-      {/* Bottom Navigation Bar */}
-      <View className="absolute bottom-0 left-0 right-0 bg-zinc-950/90 border-t border-zinc-800 flex-row justify-around py-4 px-6">
-        <TouchableOpacity className="items-center" activeOpacity={0.7}>
-          <Text className="text-white text-2xl mb-1">📋</Text>
-          <Text className="text-white text-xs font-medium">Pending</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          className="items-center"
-          onPress={navigateToHistory}
-          activeOpacity={0.7}
-        >
-          <Text className="text-zinc-500 text-2xl mb-1">📜</Text>
-          <Text className="text-zinc-500 text-xs">History</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          className="items-center"
-          onPress={navigateToSettings}
-          activeOpacity={0.7}
-        >
-          <Text className="text-zinc-500 text-2xl mb-1">⚙️</Text>
-          <Text className="text-zinc-500 text-xs">Settings</Text>
-        </TouchableOpacity>
-      </View>
+      <BottomNav />
     </View>
   );
 }

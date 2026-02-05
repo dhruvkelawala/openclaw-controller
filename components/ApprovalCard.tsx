@@ -1,201 +1,119 @@
-import React, { useEffect, useRef } from "react";
-import { View, Text, TouchableOpacity, Animated } from "react-native";
-import { ApprovalAction } from "../schemas";
-import { tokens } from "../lib/design-tokens";
-import { getActionStyles } from "../lib/styles";
-import { cn } from "../lib/cn";
+import React from 'react';
+import { View, Text, Pressable } from 'react-native';
+import Animated, {
+  FadeInDown,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
+import type { ApprovalAction } from '../types';
+import { cn } from '../lib/cn';
 
 interface ApprovalCardProps {
   approval: ApprovalAction;
   onPress: (approval: ApprovalAction) => void;
-  index?: number;
 }
 
-export function ApprovalCard({ approval, onPress, index = 0 }: ApprovalCardProps) {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(20)).current;
-  const scaleAnim = useRef(new Animated.Value(0.95)).current;
-  const pulseAnim = useRef(new Animated.Value(1)).current;
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
+export function ApprovalCard({ approval, onPress }: ApprovalCardProps) {
   const isExpired = Date.now() > approval.expiry;
   const timeLeft = Math.max(0, Math.floor((approval.expiry - Date.now()) / 1000));
   const minutesLeft = Math.floor(timeLeft / 60);
   const secondsLeft = timeLeft % 60;
 
-  const actionStyle = getActionStyles(approval.action);
+  const scale = useSharedValue(1);
 
-  // Staggered entrance animation
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 400,
-        delay: index * 100,
-        useNativeDriver: true,
-      }),
-      Animated.spring(slideAnim, {
-        toValue: 0,
-        stiffness: 300,
-        damping: 25,
-        delay: index * 100,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        stiffness: 300,
-        damping: 25,
-        delay: index * 100,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
 
-  // Expiry pulse animation
-  useEffect(() => {
-    if (timeLeft < 60 && !isExpired) {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, {
-            toValue: 1.02,
-            duration: 500,
-            useNativeDriver: true,
-          }),
-          Animated.timing(pulseAnim, {
-            toValue: 1,
-            duration: 500,
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
+  const getActionColor = () => {
+    switch (approval.action) {
+      case 'swap':
+        return 'text-blue-400';
+      case 'transfer':
+        return 'text-green-400';
+      case 'trade':
+        return 'text-purple-400';
+      case 'stake':
+        return 'text-yellow-400';
+      case 'unstake':
+        return 'text-orange-400';
+      default:
+        return 'text-gray-400';
     }
-  }, [timeLeft, isExpired]);
+  };
+
+  const getActionIcon = () => {
+    switch (approval.action) {
+      case 'swap':
+        return '⇄';
+      case 'transfer':
+        return '→';
+      case 'trade':
+        return '⚡';
+      case 'stake':
+        return '🔒';
+      case 'unstake':
+        return '🔓';
+      default:
+        return '⋯';
+    }
+  };
 
   return (
-    <Animated.View
-      style={{
-        opacity: fadeAnim,
-        transform: [{ translateY: slideAnim }, { scale: scaleAnim }],
+    <AnimatedPressable
+      entering={FadeInDown.duration(220)}
+      onPress={() => {
+        void Haptics.selectionAsync();
+        onPress(approval);
       }}
+      onPressIn={() => {
+        scale.value = withSpring(0.98, { stiffness: 300, damping: 18 });
+      }}
+      onPressOut={() => {
+        scale.value = withSpring(1, { stiffness: 300, damping: 18 });
+      }}
+      style={animatedStyle}
+      className={cn(
+        'bg-zinc-900 rounded-xl p-4 mb-3 border border-zinc-800',
+        isExpired ? 'opacity-80' : null
+      )}
     >
-      <TouchableOpacity
-        onPress={() => onPress(approval)}
-        activeOpacity={0.8}
-        className={cn(
-          "flex-row rounded-sm mb-3 overflow-hidden border",
-          isExpired && "opacity-60",
-          timeLeft < 60 && !isExpired && "shadow-lg"
-        )}
-        style={{
-          backgroundColor: tokens.colors.bg.secondary,
-          borderColor: isExpired
-            ? tokens.colors.text.muted
-            : timeLeft < 60 && !isExpired
-              ? tokens.colors.accent.crimson
-              : tokens.colors.border.default,
-          shadowColor: timeLeft < 60 && !isExpired ? tokens.colors.accent.crimson : undefined,
-          shadowOffset: timeLeft < 60 && !isExpired ? { width: 0, height: 0 } : undefined,
-          shadowOpacity: timeLeft < 60 && !isExpired ? 0.3 : undefined,
-          shadowRadius: timeLeft < 60 && !isExpired ? 10 : undefined,
-          elevation: timeLeft < 60 && !isExpired ? 5 : undefined,
-        }}
-      >
-        {/* Left accent bar */}
-        <View className="w-1" style={{ backgroundColor: actionStyle.badgeText.color }} />
-
-        <View className="flex-1 p-4">
-          {/* Header row */}
-          <View className="flex-row justify-between items-start">
-            <View className="flex-row items-center">
-              <View style={[actionStyle.badge]}>
-                <Text style={actionStyle.badgeText}>{approval.action}</Text>
-              </View>
-            </View>
-
-            <Animated.View className="items-end" style={{ transform: [{ scale: pulseAnim }] }}>
-              <Text
-                className="text-2xl font-bold tracking-tight"
-                style={{
-                  color: tokens.colors.text.primary,
-                  fontVariant: ["tabular-nums"],
-                }}
-              >
-                {approval.amount}
-              </Text>
-              <Text
-                className="text-xs font-semibold tracking-wide mt-0.5"
-                style={{ color: tokens.colors.text.secondary }}
-              >
-                {approval.coin}
-              </Text>
-            </Animated.View>
+      <View className="flex-row justify-between items-start">
+        <View className="flex-row items-center">
+          <View className="w-10 h-10 bg-zinc-800 rounded-lg items-center justify-center mr-3">
+            <Text className="text-white text-lg">{getActionIcon()}</Text>
           </View>
-
-          {/* Divider */}
-          <View className="h-px my-3" style={{ backgroundColor: tokens.colors.border.default }} />
-
-          {/* Footer row */}
-          <View className="flex-row justify-between items-center">
-            <View className="flex-row items-center">
-              <Text
-                className="text-[10px] font-bold tracking-wide mr-2"
-                style={{ color: tokens.colors.text.muted }}
-              >
-                ID
-              </Text>
-              <Text
-                className="text-[11px] font-medium tracking-wide"
-                style={{
-                  color: tokens.colors.text.tertiary,
-                  fontFamily: "monospace",
-                }}
-              >
-                {approval.id.slice(0, 12).toUpperCase()}...
-              </Text>
-            </View>
-
-            <View className="flex-row items-center">
-              {!isExpired ? (
-                <>
-                  <View
-                    className="w-1.5 h-1.5 rounded-full mr-1.5"
-                    style={{
-                      backgroundColor:
-                        timeLeft < 60 ? tokens.colors.accent.crimson : tokens.colors.accent.lime,
-                    }}
-                  />
-                  <Text
-                    className="text-sm font-semibold tracking-wide"
-                    style={{
-                      color:
-                        timeLeft < 60 ? tokens.colors.accent.crimson : tokens.colors.text.secondary,
-                      fontVariant: ["tabular-nums"],
-                    }}
-                  >
-                    {minutesLeft.toString().padStart(2, "0")}:
-                    {secondsLeft.toString().padStart(2, "0")}
-                  </Text>
-                </>
-              ) : (
-                <View className="px-2 py-0.5" style={{ backgroundColor: tokens.colors.text.muted }}>
-                  <Text
-                    className="text-[10px] font-extrabold tracking-wide"
-                    style={{ color: tokens.colors.bg.primary }}
-                  >
-                    EXPIRED
-                  </Text>
-                </View>
-              )}
-            </View>
+          <View>
+            <Text className="text-white font-semibold text-base">
+              {approval.coin}
+            </Text>
+            <Text className={cn('text-sm', getActionColor())}>
+              {approval.action.charAt(0).toUpperCase() + approval.action.slice(1)}
+            </Text>
           </View>
         </View>
 
-        {/* Arrow indicator */}
-        <View className="justify-center pr-4">
-          <Text className="text-xl font-light" style={{ color: actionStyle.badgeText.color }}>
-            →
-          </Text>
+        <View className="items-end">
+          <Text className="text-white font-bold text-lg">{approval.amount}</Text>
+          {!isExpired ? (
+            <Text className="text-zinc-500 text-xs">
+              {minutesLeft}:{secondsLeft.toString().padStart(2, '0')} left
+            </Text>
+          ) : (
+            <Text className="text-red-500 text-xs">Expired</Text>
+          )}
         </View>
-      </TouchableOpacity>
-    </Animated.View>
+      </View>
+
+      {isExpired && (
+        <View className="mt-3 pt-3 border-t border-zinc-800">
+          <Text className="text-red-500 text-sm">This action has expired</Text>
+        </View>
+      )}
+    </AnimatedPressable>
   );
 }

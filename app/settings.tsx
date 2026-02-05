@@ -1,46 +1,43 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { router } from 'expo-router';
-import * as SecureStore from 'expo-secure-store';
-import { useAuth } from '../hooks/useAuth';
-import { usePushNotifications } from '../hooks/usePushNotifications';
-import { useApprovalsStore } from '../store/approvalsStore';
+import React from "react";
+import { View, Text, ScrollView, TouchableOpacity, Alert } from "react-native";
+import { router } from "expo-router";
+import { useAuth } from "../hooks/useAuth";
+import { usePushNotifications } from "../hooks/usePushNotifications";
+import { useRegisterDevice } from "../hooks/useApprovalsQuery";
+import { useApprovalsStore } from "../store/approvalsStore";
 
 export default function SettingsScreen() {
-  const { deviceToken, reRegister, isRegistered } = useAuth();
+  const { deviceToken, isRegistered } = useAuth();
   const { sendTestNotification, permissionStatus, requestPermissions } = usePushNotifications();
+  const registerDeviceMutation = useRegisterDevice(deviceToken);
   const { clearHistory } = useApprovalsStore();
 
   const handleTestNotification = async () => {
-    if (permissionStatus !== 'granted') {
-      Alert.alert(
-        'Permissions Required',
-        'Please enable push notifications to test.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Enable', onPress: requestPermissions },
-        ]
-      );
+    if (permissionStatus !== "granted") {
+      Alert.alert("Permissions Required", "Please enable push notifications to test.", [
+        { text: "Cancel", style: "cancel" },
+        { text: "Enable", onPress: requestPermissions },
+      ]);
       return;
     }
-    
+
     await sendTestNotification();
-    Alert.alert('Test Sent', 'Check your notifications!');
+    Alert.alert("Test Sent", "Check your notifications!");
   };
 
   const handleClearHistory = () => {
     Alert.alert(
-      'Clear History',
-      'Are you sure you want to clear all history? This cannot be undone.',
+      "Clear History",
+      "Are you sure you want to clear all history? This cannot be undone.",
       [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Clear', 
-          style: 'destructive',
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Clear",
+          style: "destructive",
           onPress: () => {
             clearHistory();
-            Alert.alert('History Cleared', 'All history has been removed.');
-          }
+            Alert.alert("History Cleared", "All history has been removed.");
+          },
         },
       ]
     );
@@ -48,20 +45,21 @@ export default function SettingsScreen() {
 
   const handleReRegister = async () => {
     Alert.alert(
-      'Re-register Device',
-      'This will re-register your device with the OpenClaw backend.',
+      "Re-register Device",
+      "This will re-register your device with the OpenClaw backend.",
       [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Re-register', 
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Re-register",
           onPress: async () => {
-            const success = await reRegister();
-            if (success) {
-              Alert.alert('Success', 'Device re-registered successfully');
-            } else {
-              Alert.alert('Error', 'Failed to re-register device');
+            try {
+              await registerDeviceMutation.mutateAsync({});
+              Alert.alert("Success", "Device re-registered successfully");
+            } catch (error) {
+              const message = error instanceof Error ? error.message : "Unknown error";
+              Alert.alert("Error", `Failed to re-register device: ${message}`);
             }
-          }
+          },
         },
       ]
     );
@@ -69,18 +67,20 @@ export default function SettingsScreen() {
 
   const handleViewDeviceToken = () => {
     Alert.alert(
-      'Device Token',
-      deviceToken ? `${deviceToken.substring(0, 16)}...\n\n(Truncated for security)` : 'No token found',
-      [{ text: 'OK' }]
+      "Device Token",
+      deviceToken
+        ? `${deviceToken.substring(0, 16)}...\n\n(Truncated for security)`
+        : "No token found",
+      [{ text: "OK" }]
     );
   };
 
   const navigateToPending = () => {
-    router.push('/');
+    router.push("/");
   };
 
   const navigateToHistory = () => {
-    router.push('/history');
+    router.push("/history");
   };
 
   return (
@@ -107,17 +107,21 @@ export default function SettingsScreen() {
               activeOpacity={0.7}
             >
               <Text className="text-white text-base">Push Notifications</Text>
-              <View className={`px-3 py-1 rounded-full ${
-                permissionStatus === 'granted' ? 'bg-green-500/20' : 'bg-red-500/20'
-              }`}>
-                <Text className={`text-sm ${
-                  permissionStatus === 'granted' ? 'text-green-500' : 'text-red-500'
-                }`}>
-                  {permissionStatus === 'granted' ? 'Enabled' : 'Disabled'}
+              <View
+                className={`px-3 py-1 rounded-full ${
+                  permissionStatus === "granted" ? "bg-green-500/20" : "bg-red-500/20"
+                }`}
+              >
+                <Text
+                  className={`text-sm ${
+                    permissionStatus === "granted" ? "text-green-500" : "text-red-500"
+                  }`}
+                >
+                  {permissionStatus === "granted" ? "Enabled" : "Disabled"}
                 </Text>
               </View>
             </TouchableOpacity>
-            
+
             <TouchableOpacity
               onPress={handleTestNotification}
               className="flex-row justify-between items-center p-4"
@@ -131,9 +135,7 @@ export default function SettingsScreen() {
 
         {/* Device Section */}
         <View className="mb-6">
-          <Text className="text-zinc-500 text-xs uppercase tracking-wide mb-3 ml-1">
-            Device
-          </Text>
+          <Text className="text-zinc-500 text-xs uppercase tracking-wide mb-3 ml-1">Device</Text>
           <View className="bg-zinc-900 rounded-xl overflow-hidden">
             <TouchableOpacity
               onPress={handleViewDeviceToken}
@@ -142,23 +144,28 @@ export default function SettingsScreen() {
             >
               <Text className="text-white text-base">Device Token</Text>
               <Text className="text-zinc-500 text-sm font-mono">
-                {deviceToken ? `${deviceToken.substring(0, 8)}...` : 'None'}
+                {deviceToken ? `${deviceToken.substring(0, 8)}...` : "None"}
               </Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity
               onPress={handleReRegister}
+              disabled={registerDeviceMutation.isPending}
               className="flex-row justify-between items-center p-4"
               activeOpacity={0.7}
             >
               <Text className="text-white text-base">Re-register Device</Text>
-              <View className={`px-3 py-1 rounded-full ${
-                isRegistered ? 'bg-green-500/20' : 'bg-yellow-500/20'
-              }`}>
-                <Text className={`text-sm ${
-                  isRegistered ? 'text-green-500' : 'text-yellow-500'
-                }`}>
-                  {isRegistered ? 'Active' : 'Inactive'}
+              <View
+                className={`px-3 py-1 rounded-full ${
+                  isRegistered ? "bg-green-500/20" : "bg-yellow-500/20"
+                }`}
+              >
+                <Text className={`text-sm ${isRegistered ? "text-green-500" : "text-yellow-500"}`}>
+                  {registerDeviceMutation.isPending
+                    ? "Registering..."
+                    : isRegistered
+                      ? "Active"
+                      : "Inactive"}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -167,9 +174,7 @@ export default function SettingsScreen() {
 
         {/* Data Section */}
         <View className="mb-6">
-          <Text className="text-zinc-500 text-xs uppercase tracking-wide mb-3 ml-1">
-            Data
-          </Text>
+          <Text className="text-zinc-500 text-xs uppercase tracking-wide mb-3 ml-1">Data</Text>
           <View className="bg-zinc-900 rounded-xl overflow-hidden">
             <TouchableOpacity
               onPress={handleClearHistory}
@@ -184,14 +189,12 @@ export default function SettingsScreen() {
 
         {/* About Section */}
         <View className="mb-6">
-          <Text className="text-zinc-500 text-xs uppercase tracking-wide mb-3 ml-1">
-            About
-          </Text>
+          <Text className="text-zinc-500 text-xs uppercase tracking-wide mb-3 ml-1">About</Text>
           <View className="bg-zinc-900 rounded-xl p-4">
             <Text className="text-zinc-400 text-sm leading-5">
-              OpenClaw Controller is your voice and remote approval companion. 
-              Receive push notifications for actions requiring approval and 
-              securely approve or reject them with biometric authentication.
+              OpenClaw Controller is your voice and remote approval companion. Receive push
+              notifications for actions requiring approval and securely approve or reject them with
+              biometric authentication.
             </Text>
           </View>
         </View>

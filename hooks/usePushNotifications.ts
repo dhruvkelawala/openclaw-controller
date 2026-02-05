@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { router } from 'expo-router';
@@ -74,7 +73,7 @@ export function usePushNotifications() {
     const approval = {
       id: data.actionId,
       coin: data.coin,
-      action: data.action as any,
+      action: data.action as ApprovalAction['action'],
       amount: data.amount,
       expiry: data.expiry,
       approveUrl: data.approveUrl,

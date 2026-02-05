@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import * as SecureStore from 'expo-secure-store';
-import { DeviceRegistration } from '../types';
+// Types available if needed for future auth enhancements
 
 const DEVICE_TOKEN_KEY = 'openclaw_device_token';
 const BACKEND_URL = 'https://openclaw-prod.tailbc93c6.ts.net';

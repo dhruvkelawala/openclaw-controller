@@ -41,15 +41,15 @@ export function useApprovals({ deviceToken }: UseApprovalsOptions) {
       const data = await response.json();
       
       // Transform backend response to ApprovalAction format
-      const approvals: ApprovalAction[] = data.map((item: any) => ({
-        id: item.actionId || item.id,
-        coin: item.coin,
-        action: item.action,
-        amount: item.amount,
-        expiry: item.expiry,
-        approveUrl: item.approveUrl || `${BACKEND_URL}/approve`,
-        rejectUrl: item.rejectUrl || `${BACKEND_URL}/reject`,
-        status: 'pending',
+      const approvals: ApprovalAction[] = data.map((item: Record<string, unknown>) => ({
+        id: (item.actionId as string) || (item.id as string),
+        coin: item.coin as string,
+        action: item.action as ApprovalAction['action'],
+        amount: item.amount as string,
+        expiry: item.expiry as number,
+        approveUrl: (item.approveUrl as string) || `${BACKEND_URL}/approve`,
+        rejectUrl: (item.rejectUrl as string) || `${BACKEND_URL}/reject`,
+        status: 'pending' as const,
         timestamp: Date.now(),
       }));
       

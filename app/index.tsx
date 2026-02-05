@@ -42,7 +42,8 @@ export default function PendingApprovalsScreen() {
     router.push('/settings');
   };
 
-  const isLoading = authLoading || approvalsLoading;
+  // Combine loading states
+  // const isLoading = authLoading || approvalsLoading;
 
   // Show welcome/setup state if not registered
   if (!isRegistered && !authLoading) {

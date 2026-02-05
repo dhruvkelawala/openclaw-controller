@@ -1,396 +1,159 @@
-import React, { useEffect, useRef } from "react";
-import { View, Text, FlatList, RefreshControl, TouchableOpacity, Animated } from "react-native";
-import { router } from "expo-router";
-import { useAuth } from "../hooks/useAuth";
-import { usePendingApprovals } from "../hooks/useApprovalsQuery";
-import { usePushNotifications } from "../hooks/usePushNotifications";
-import { ApprovalCard } from "../components/ApprovalCard";
-import { AnimatedBackground, ScanLines } from "../components/AnimatedBackground";
-import { ApprovalAction } from "../schemas";
-import { tokens } from "../lib/design-tokens";
+import React, { useEffect, useState } from 'react';
+import { View, Text, FlatList, RefreshControl, TouchableOpacity } from 'react-native';
+import { router } from 'expo-router';
+import { useAuth } from '../hooks/useAuth';
+import { useApprovals } from '../hooks/useApprovals';
+import { usePushNotifications } from '../hooks/usePushNotifications';
+import { ApprovalCard } from '../components/ApprovalCard';
+import { ApprovalAction } from '../types';
 
 export default function PendingApprovalsScreen() {
   const { deviceToken, isLoading: authLoading, isRegistered } = useAuth();
-  const {
-    data: pendingApprovals = [],
-    isRefetching,
-    refetch,
-    error: approvalsError,
-  } = usePendingApprovals(deviceToken);
+  const { 
+    pendingApprovals, 
+    isLoading: approvalsLoading, 
+    fetchPendingApprovals 
+  } = useApprovals({ deviceToken });
   const { permissionStatus, requestPermissions } = usePushNotifications();
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Animation values
-  const headerOpacity = useRef(new Animated.Value(0)).current;
-  const headerSlide = useRef(new Animated.Value(-30)).current;
-  const statsScale = useRef(new Animated.Value(0.9)).current;
-
+  // Check for notification permissions on first load
   useEffect(() => {
     if (permissionStatus === null) {
       requestPermissions();
     }
   }, [permissionStatus, requestPermissions]);
 
-  // Entrance animations
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(headerOpacity, {
-        toValue: 1,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-      Animated.spring(headerSlide, {
-        toValue: 0,
-        stiffness: 200,
-        damping: 20,
-        useNativeDriver: true,
-      }),
-      Animated.spring(statsScale, {
-        toValue: 1,
-        stiffness: 200,
-        damping: 20,
-        delay: 200,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
-
   const onRefresh = async () => {
-    await refetch();
+    setRefreshing(true);
+    await fetchPendingApprovals();
+    setRefreshing(false);
   };
 
   const handleApprovalPress = (approval: ApprovalAction) => {
     router.push(`/approval/${approval.id}`);
   };
 
-  const navigateToHistory = () => router.push("/history");
-  const navigateToSettings = () => router.push("/settings");
+  const navigateToHistory = () => {
+    router.push('/history');
+  };
 
-  // Show welcome/setup state
+  const navigateToSettings = () => {
+    router.push('/settings');
+  };
+
+  const isLoading = authLoading || approvalsLoading;
+
+  // Show welcome/setup state if not registered
   if (!isRegistered && !authLoading) {
     return (
-      <View className="flex-1" style={{ backgroundColor: tokens.colors.bg.primary }}>
-        <AnimatedBackground />
-        <View className="flex-1 justify-center items-center px-8">
-          <Animated.View style={{ transform: [{ scale: statsScale }] }}>
-            <View
-              className="w-20 h-20 justify-center items-center mb-8 rounded-sm border-2"
-              style={{
-                borderColor: tokens.colors.accent.cyan,
-                shadowColor: tokens.colors.accent.cyan,
-                shadowOffset: { width: 0, height: 0 },
-                shadowOpacity: 0.5,
-                shadowRadius: 20,
-                elevation: 10,
-              }}
-            >
-              <Text className="text-4xl font-light" style={{ color: tokens.colors.accent.cyan }}>
-                ◈
-              </Text>
-            </View>
-          </Animated.View>
-
-          <Text
-            className="text-5xl font-black tracking-[8px]"
-            style={{ color: tokens.colors.text.primary }}
-          >
-            OPENCLAW
-          </Text>
-          <Text
-            className="text-lg font-bold tracking-[12px] mt-1"
-            style={{ color: tokens.colors.accent.cyan }}
-          >
-            CONTROLLER
-          </Text>
-
-          <Text
-            className="text-sm text-center mt-6 leading-6 tracking-wide"
-            style={{ color: tokens.colors.text.secondary }}
-          >
-            High-security approval gateway for{"\n"}autonomous crypto operations
-          </Text>
-
-          {!permissionStatus || permissionStatus !== "granted" ? (
-            <TouchableOpacity
-              onPress={requestPermissions}
-              className="mt-12 py-4 px-8 rounded-sm relative overflow-hidden"
-              style={{ backgroundColor: tokens.colors.accent.cyan }}
-              activeOpacity={0.8}
-            >
-              <Text
-                className="text-sm font-black tracking-[2px]"
-                style={{ color: tokens.colors.bg.primary }}
-              >
-                ENABLE NOTIFICATIONS
-              </Text>
-              <View className="absolute bottom-0 left-0 right-0 h-[3px] bg-black/20" />
-            </TouchableOpacity>
-          ) : (
-            <View className="mt-12 items-center">
-              <View
-                className="w-3 h-3 rounded-full mb-4"
-                style={{
-                  backgroundColor: tokens.colors.accent.lime,
-                  shadowColor: tokens.colors.accent.lime,
-                  shadowOffset: { width: 0, height: 0 },
-                  shadowOpacity: 0.8,
-                  shadowRadius: 10,
-                }}
-              />
-              <Text
-                className="text-base font-extrabold tracking-[4px]"
-                style={{ color: tokens.colors.accent.lime }}
-              >
-                SYSTEM READY
-              </Text>
-              <Text
-                className="text-sm mt-2 tracking-wide"
-                style={{ color: tokens.colors.text.tertiary }}
-              >
-                Waiting for approval requests...
-              </Text>
-            </View>
-          )}
+      <View className="flex-1 bg-black px-6 justify-center items-center">
+        <View className="w-20 h-20 bg-zinc-900 rounded-3xl items-center justify-center mb-6">
+          <Text className="text-4xl">🦾</Text>
         </View>
+        <Text className="text-white text-2xl font-bold mb-3 text-center">
+          Welcome to OpenClaw
+        </Text>
+        <Text className="text-zinc-400 text-base text-center mb-8 leading-6">
+          Your voice and remote approval companion.{'\n'}
+          Get notified when actions need your approval.
+        </Text>
+        
+        {!permissionStatus || permissionStatus !== 'granted' ? (
+          <TouchableOpacity
+            onPress={requestPermissions}
+            className="bg-white rounded-xl py-4 px-8 w-full"
+            activeOpacity={0.8}
+          >
+            <Text className="text-black font-semibold text-base text-center">
+              Enable Push Notifications
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <View className="items-center">
+            <View className="bg-green-500/20 rounded-full px-4 py-2 mb-4">
+              <Text className="text-green-500 font-medium">Notifications enabled</Text>
+            </View>
+            <Text className="text-zinc-500 text-sm text-center">
+              You're all set!{'\n'}
+              Waiting for approval requests...
+            </Text>
+          </View>
+        )}
       </View>
     );
   }
 
-  // Show error state
-  if (approvalsError) {
-    console.error("Approvals error:", approvalsError);
-  }
-
   return (
-    <View className="flex-1" style={{ backgroundColor: tokens.colors.bg.primary }}>
-      <AnimatedBackground />
-      <ScanLines />
-
-      {/* Header */}
-      <Animated.View
-        className="pt-16 px-5 pb-4 border-b"
-        style={{
-          backgroundColor: tokens.colors.bg.primary,
-          borderBottomColor: tokens.colors.border.default,
-          opacity: headerOpacity,
-          transform: [{ translateY: headerSlide }],
-        }}
-      >
-        <View className="flex-row justify-between items-start mb-5">
-          <View>
-            <Text
-              className="text-[28px] font-black tracking-tight"
-              style={{ color: tokens.colors.text.primary }}
-            >
-              PENDING
-            </Text>
-            <Text
-              className="text-xs font-bold tracking-[4px] mt-1"
-              style={{ color: tokens.colors.accent.cyan }}
-            >
-              APPROVAL QUEUE
-            </Text>
-          </View>
-          <View
-            className="flex-row items-center px-3 py-1.5 rounded-sm border"
-            style={{
-              backgroundColor: tokens.colors.bg.secondary,
-              borderColor: tokens.colors.border.default,
-            }}
-          >
-            <View
-              className="w-1.5 h-1.5 rounded-full mr-1.5"
-              style={{
-                backgroundColor: tokens.colors.accent.lime,
-                shadowColor: tokens.colors.accent.lime,
-                shadowOffset: { width: 0, height: 0 },
-                shadowOpacity: 0.8,
-                shadowRadius: 5,
-              }}
-            />
-            <Text
-              className="text-[10px] font-extrabold tracking-wide"
-              style={{ color: tokens.colors.text.secondary }}
-            >
-              LIVE
-            </Text>
-          </View>
+    <View className="flex-1 bg-black">
+      {/* Header Stats */}
+      <View className="flex-row px-4 pt-4 pb-2 gap-3">
+        <View className="flex-1 bg-zinc-900 rounded-xl p-4">
+          <Text className="text-zinc-500 text-xs uppercase tracking-wide">Pending</Text>
+          <Text className="text-white text-2xl font-bold mt-1">{pendingApprovals.length}</Text>
         </View>
-
-        {/* Stats */}
-        <Animated.View className="flex-row gap-3" style={{ transform: [{ scale: statsScale }] }}>
-          <View
-            className="flex-1 items-center p-3 rounded-sm border"
-            style={{
-              backgroundColor: tokens.colors.bg.secondary,
-              borderColor: tokens.colors.border.default,
-            }}
-          >
-            <Text
-              className="text-xl font-extrabold"
-              style={{
-                color: tokens.colors.text.primary,
-                fontVariant: ["tabular-nums"],
-              }}
-            >
-              {pendingApprovals.length}
-            </Text>
-            <Text
-              className="text-[9px] font-bold tracking-wide mt-1"
-              style={{ color: tokens.colors.text.tertiary }}
-            >
-              PENDING
-            </Text>
-          </View>
-          <View
-            className="flex-1 items-center p-3 rounded-sm border"
-            style={{
-              backgroundColor: tokens.colors.accent.crimsonGlow,
-              borderColor: tokens.colors.accent.crimson,
-            }}
-          >
-            <Text
-              className="text-xl font-extrabold"
-              style={{
-                color: tokens.colors.text.primary,
-                fontVariant: ["tabular-nums"],
-              }}
-            >
-              {
-                pendingApprovals.filter(
-                  (a) => Date.now() > a.expiry - 60000 && Date.now() < a.expiry
-                ).length
-              }
-            </Text>
-            <Text
-              className="text-[9px] font-bold tracking-wide mt-1"
-              style={{ color: tokens.colors.accent.crimson }}
-            >
-              URGENT
-            </Text>
-          </View>
-          <TouchableOpacity
-            className="flex-1 items-center p-3 rounded-sm border"
-            style={{
-              backgroundColor: tokens.colors.bg.tertiary,
-              borderColor: tokens.colors.border.default,
-            }}
-            onPress={navigateToHistory}
-            activeOpacity={0.7}
-          >
-            <Text className="text-xl font-extrabold" style={{ color: tokens.colors.text.primary }}>
-              HISTORY
-            </Text>
-            <Text
-              className="text-[9px] font-bold tracking-wide mt-1"
-              style={{ color: tokens.colors.text.tertiary }}
-            >
-              VIEW →
-            </Text>
-          </TouchableOpacity>
-        </Animated.View>
-      </Animated.View>
+        <TouchableOpacity 
+          onPress={navigateToHistory}
+          className="flex-1 bg-zinc-900 rounded-xl p-4"
+          activeOpacity={0.7}
+        >
+          <Text className="text-zinc-500 text-xs uppercase tracking-wide">History</Text>
+          <Text className="text-white text-2xl font-bold mt-1">View →</Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Approvals List */}
-      <FlatList
+      <FlatList<ApprovalAction>
         data={pendingApprovals}
         keyExtractor={(item) => item.id}
-        renderItem={({ item, index }) => (
+        renderItem={({ item }: { item: ApprovalAction }) => (
           <View className="px-4">
-            <ApprovalCard approval={item} onPress={handleApprovalPress} index={index} />
+            <ApprovalCard approval={item} onPress={handleApprovalPress} />
           </View>
         )}
-        contentContainerStyle={{ paddingTop: 16, paddingBottom: 100 }}
+        contentContainerStyle={{ paddingTop: 8, paddingBottom: 100 }}
         refreshControl={
           <RefreshControl
-            refreshing={isRefetching}
+            refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={tokens.colors.accent.cyan}
-            colors={[tokens.colors.accent.cyan]}
+            tintColor="#ffffff"
           />
         }
         ListEmptyComponent={
-          <View className="items-center mt-20">
-            <View
-              className="w-16 h-16 justify-center items-center rounded-full mb-6 border"
-              style={{ borderColor: tokens.colors.border.default }}
-            >
-              <Text className="text-3xl" style={{ color: tokens.colors.text.muted }}>
-                ◉
-              </Text>
+          <View className="flex-1 justify-center items-center px-6 mt-20">
+            <View className="w-16 h-16 bg-zinc-900 rounded-full items-center justify-center mb-4">
+              <Text className="text-3xl">📭</Text>
             </View>
-            <Text
-              className="text-lg font-extrabold tracking-[4px] mb-2"
-              style={{ color: tokens.colors.text.secondary }}
-            >
-              QUEUE EMPTY
+            <Text className="text-white text-lg font-semibold mb-2">
+              No pending approvals
             </Text>
-            <Text
-              className="text-sm text-center leading-5"
-              style={{ color: tokens.colors.text.tertiary }}
-            >
-              No pending approvals at this time{"\n"}
-              Pull to refresh or wait for new requests
+            <Text className="text-zinc-500 text-base text-center">
+              When actions need your approval,{'\n'}they'll appear here.
             </Text>
+            <TouchableOpacity
+              onPress={onRefresh}
+              className="mt-6 bg-zinc-900 rounded-xl py-3 px-6"
+              activeOpacity={0.7}
+            >
+              <Text className="text-white font-medium">Refresh</Text>
+            </TouchableOpacity>
           </View>
         }
       />
 
-      {/* Bottom Navigation */}
-      <View
-        className="absolute bottom-0 left-0 right-0 flex-row py-3 pb-6 border-t"
-        style={{
-          backgroundColor: tokens.colors.bg.primary,
-          borderTopColor: tokens.colors.border.default,
-        }}
-      >
-        <TouchableOpacity className="flex-1 items-center" activeOpacity={0.7}>
-          <Text
-            className="text-xl mb-1"
-            style={{
-              color: tokens.colors.accent.cyan,
-              textShadowColor: tokens.colors.accent.cyan,
-              textShadowOffset: { width: 0, height: 0 },
-              textShadowRadius: 10,
-            }}
-          >
-            ◈
-          </Text>
-          <Text
-            className="text-[10px] font-extrabold tracking-wide"
-            style={{ color: tokens.colors.accent.cyan }}
-          >
-            QUEUE
-          </Text>
+      {/* Bottom Navigation Bar */}
+      <View className="absolute bottom-0 left-0 right-0 bg-zinc-950/90 border-t border-zinc-800 flex-row justify-around py-4 px-6">
+        <TouchableOpacity className="items-center" activeOpacity={0.7}>
+          <Text className="text-white text-2xl mb-1">📋</Text>
+          <Text className="text-white text-xs font-medium">Pending</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          className="flex-1 items-center"
-          onPress={navigateToHistory}
-          activeOpacity={0.7}
-        >
-          <Text className="text-xl mb-1" style={{ color: tokens.colors.text.muted }}>
-            ◉
-          </Text>
-          <Text
-            className="text-[10px] font-bold tracking-wide"
-            style={{ color: tokens.colors.text.muted }}
-          >
-            LOG
-          </Text>
+        <TouchableOpacity className="items-center" onPress={navigateToHistory} activeOpacity={0.7}>
+          <Text className="text-zinc-500 text-2xl mb-1">📜</Text>
+          <Text className="text-zinc-500 text-xs">History</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          className="flex-1 items-center"
-          onPress={navigateToSettings}
-          activeOpacity={0.7}
-        >
-          <Text className="text-xl mb-1" style={{ color: tokens.colors.text.muted }}>
-            ◎
-          </Text>
-          <Text
-            className="text-[10px] font-bold tracking-wide"
-            style={{ color: tokens.colors.text.muted }}
-          >
-            CONFIG
-          </Text>
+        <TouchableOpacity className="items-center" onPress={navigateToSettings} activeOpacity={0.7}>
+          <Text className="text-zinc-500 text-2xl mb-1">⚙️</Text>
+          <Text className="text-zinc-500 text-xs">Settings</Text>
         </TouchableOpacity>
       </View>
     </View>

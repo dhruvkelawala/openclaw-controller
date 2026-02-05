@@ -113,10 +113,10 @@ export default function HistoryScreen() {
       </View>
 
       {/* History List */}
-      <FlatList
+      <FlatList<ApprovalAction>
         data={history}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
+        renderItem={({ item }: { item: ApprovalAction }) => (
           <View className="px-4">
             <HistoryCard action={item} onPress={() => handleActionPress(item)} />
           </View>

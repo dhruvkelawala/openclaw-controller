@@ -3,9 +3,32 @@ import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { router } from 'expo-router';
-import { NotificationPayload } from '../types';
+import { NotificationPayload, ApprovalAction } from '../types';
 import { useApprovalsStore } from '../store/approvalsStore';
 import { ENV } from '../lib/env';
+
+// Type guard for notification payload
+function isNotificationPayload(data: unknown): data is NotificationPayload {
+  if (!data || typeof data !== 'object') return false;
+  const obj = data as Record<string, unknown>;
+  return (
+    typeof obj.actionId === 'string' &&
+    typeof obj.coin === 'string' &&
+    typeof obj.action === 'string' &&
+    typeof obj.amount === 'string' &&
+    typeof obj.expiry === 'number' &&
+    typeof obj.approveUrl === 'string' &&
+    typeof obj.rejectUrl === 'string'
+  );
+}
+
+// Validate and coerce action string to ApprovalAction['action']
+const VALID_ACTIONS = ['swap', 'transfer', 'trade', 'stake', 'unstake', 'other'] as const;
+function toApprovalAction(action: string): ApprovalAction['action'] {
+  return VALID_ACTIONS.includes(action as ApprovalAction['action']) 
+    ? (action as ApprovalAction['action']) 
+    : 'other';
+}
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -76,15 +99,15 @@ export function usePushNotifications() {
 
   // Handle notification data
   const handleNotificationData = useCallback((data: NotificationPayload) => {
-    const approval = {
+    const approval: ApprovalAction = {
       id: data.actionId,
       coin: data.coin,
-      action: data.action as any,
+      action: toApprovalAction(data.action),
       amount: data.amount,
       expiry: data.expiry,
       approveUrl: data.approveUrl,
       rejectUrl: data.rejectUrl,
-      status: 'pending' as const,
+      status: 'pending',
       timestamp: Date.now(),
     };
     
@@ -106,7 +129,7 @@ export function usePushNotifications() {
             expiry: Date.now() + 300000,
             approveUrl: `${ENV.BACKEND_URL}/approve`,
             rejectUrl: `${ENV.BACKEND_URL}/reject`,
-          } as unknown as Record<string, unknown>,
+          },
         },
         trigger: null, // Immediate
       });
@@ -132,8 +155,8 @@ export function usePushNotifications() {
         setNotification(notification);
         
         // Extract data and add to pending approvals
-        const data = notification.request.content.data as unknown as NotificationPayload;
-        if (data && data.actionId) {
+        const data = notification.request.content.data;
+        if (isNotificationPayload(data)) {
           handleNotificationData(data);
         }
       }
@@ -143,9 +166,9 @@ export function usePushNotifications() {
     responseListener.current = Notifications.addNotificationResponseReceivedListener(
       (response) => {
         console.log('Notification response:', response);
-        const data = response.notification.request.content.data as unknown as NotificationPayload;
+        const data = response.notification.request.content.data;
 
-        if (data && data.actionId) {
+        if (isNotificationPayload(data)) {
           handleNotificationData(data);
           // Navigate to approval detail
           router.push(`/approval/${data.actionId}`);
@@ -156,8 +179,8 @@ export function usePushNotifications() {
     // Check for initial notification (app opened from notification)
     Notifications.getLastNotificationResponseAsync().then((response) => {
       if (response) {
-        const data = response.notification.request.content.data as unknown as NotificationPayload;
-        if (data && data.actionId) {
+        const data = response.notification.request.content.data;
+        if (isNotificationPayload(data)) {
           handleNotificationData(data);
           router.push(`/approval/${data.actionId}`);
         }

@@ -1,8 +1,9 @@
 import React, { useEffect, useRef } from "react";
-import { View, Text, TouchableOpacity, Animated, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, Animated } from "react-native";
 import { ApprovalAction } from "../schemas";
 import { tokens } from "../lib/design-tokens";
 import { getActionStyles } from "../lib/styles";
+import { cn } from "../lib/cn";
 
 interface ApprovalCardProps {
   approval: ApprovalAction;
@@ -71,75 +72,117 @@ export function ApprovalCard({ approval, onPress, index = 0 }: ApprovalCardProps
 
   return (
     <Animated.View
-      style={[
-        {
-          opacity: fadeAnim,
-          transform: [{ translateY: slideAnim }, { scale: scaleAnim }],
-        },
-      ]}
+      style={{
+        opacity: fadeAnim,
+        transform: [{ translateY: slideAnim }, { scale: scaleAnim }],
+      }}
     >
       <TouchableOpacity
         onPress={() => onPress(approval)}
         activeOpacity={0.8}
-        style={[
-          styles.container,
-          isExpired && styles.expired,
-          timeLeft < 60 && !isExpired && styles.urgent,
-        ]}
+        className={cn(
+          "flex-row rounded-sm mb-3 overflow-hidden border",
+          isExpired && "opacity-60",
+          timeLeft < 60 && !isExpired && "shadow-lg"
+        )}
+        style={{
+          backgroundColor: tokens.colors.bg.secondary,
+          borderColor: isExpired
+            ? tokens.colors.text.muted
+            : timeLeft < 60 && !isExpired
+              ? tokens.colors.accent.crimson
+              : tokens.colors.border.default,
+          shadowColor: timeLeft < 60 && !isExpired ? tokens.colors.accent.crimson : undefined,
+          shadowOffset: timeLeft < 60 && !isExpired ? { width: 0, height: 0 } : undefined,
+          shadowOpacity: timeLeft < 60 && !isExpired ? 0.3 : undefined,
+          shadowRadius: timeLeft < 60 && !isExpired ? 10 : undefined,
+          elevation: timeLeft < 60 && !isExpired ? 5 : undefined,
+        }}
       >
         {/* Left accent bar */}
-        <View style={[styles.accentBar, { backgroundColor: actionStyle.badgeText.color }]} />
+        <View className="w-1" style={{ backgroundColor: actionStyle.badgeText.color }} />
 
-        <View style={styles.content}>
+        <View className="flex-1 p-4">
           {/* Header row */}
-          <View style={styles.header}>
-            <View style={styles.actionType}>
+          <View className="flex-row justify-between items-start">
+            <View className="flex-row items-center">
               <View style={[actionStyle.badge]}>
                 <Text style={actionStyle.badgeText}>{approval.action}</Text>
               </View>
             </View>
 
-            <Animated.View style={[styles.amount, { transform: [{ scale: pulseAnim }] }]}>
-              <Text style={styles.amountText}>{approval.amount}</Text>
-              <Text style={styles.coinText}>{approval.coin}</Text>
+            <Animated.View className="items-end" style={{ transform: [{ scale: pulseAnim }] }}>
+              <Text
+                className="text-2xl font-bold tracking-tight"
+                style={{
+                  color: tokens.colors.text.primary,
+                  fontVariant: ["tabular-nums"],
+                }}
+              >
+                {approval.amount}
+              </Text>
+              <Text
+                className="text-xs font-semibold tracking-wide mt-0.5"
+                style={{ color: tokens.colors.text.secondary }}
+              >
+                {approval.coin}
+              </Text>
             </Animated.View>
           </View>
 
           {/* Divider */}
-          <View style={styles.divider} />
+          <View className="h-px my-3" style={{ backgroundColor: tokens.colors.border.default }} />
 
           {/* Footer row */}
-          <View style={styles.footer}>
-            <View style={styles.idContainer}>
-              <Text style={styles.idLabel}>ID</Text>
-              <Text style={styles.idValue}>{approval.id.slice(0, 12).toUpperCase()}...</Text>
+          <View className="flex-row justify-between items-center">
+            <View className="flex-row items-center">
+              <Text
+                className="text-[10px] font-bold tracking-wide mr-2"
+                style={{ color: tokens.colors.text.muted }}
+              >
+                ID
+              </Text>
+              <Text
+                className="text-[11px] font-medium tracking-wide"
+                style={{
+                  color: tokens.colors.text.tertiary,
+                  fontFamily: "monospace",
+                }}
+              >
+                {approval.id.slice(0, 12).toUpperCase()}...
+              </Text>
             </View>
 
-            <View style={styles.timeContainer}>
+            <View className="flex-row items-center">
               {!isExpired ? (
                 <>
                   <View
-                    style={[
-                      styles.timeDot,
-                      {
-                        backgroundColor:
-                          timeLeft < 60 ? tokens.colors.accent.crimson : tokens.colors.accent.lime,
-                      },
-                    ]}
+                    className="w-1.5 h-1.5 rounded-full mr-1.5"
+                    style={{
+                      backgroundColor:
+                        timeLeft < 60 ? tokens.colors.accent.crimson : tokens.colors.accent.lime,
+                    }}
                   />
                   <Text
-                    style={[
-                      styles.timeText,
-                      timeLeft < 60 && { color: tokens.colors.accent.crimson },
-                    ]}
+                    className="text-sm font-semibold tracking-wide"
+                    style={{
+                      color:
+                        timeLeft < 60 ? tokens.colors.accent.crimson : tokens.colors.text.secondary,
+                      fontVariant: ["tabular-nums"],
+                    }}
                   >
                     {minutesLeft.toString().padStart(2, "0")}:
                     {secondsLeft.toString().padStart(2, "0")}
                   </Text>
                 </>
               ) : (
-                <View style={styles.expiredBadge}>
-                  <Text style={styles.expiredText}>EXPIRED</Text>
+                <View className="px-2 py-0.5" style={{ backgroundColor: tokens.colors.text.muted }}>
+                  <Text
+                    className="text-[10px] font-extrabold tracking-wide"
+                    style={{ color: tokens.colors.bg.primary }}
+                  >
+                    EXPIRED
+                  </Text>
                 </View>
               )}
             </View>
@@ -147,132 +190,12 @@ export function ApprovalCard({ approval, onPress, index = 0 }: ApprovalCardProps
         </View>
 
         {/* Arrow indicator */}
-        <View style={styles.arrow}>
-          <Text style={[styles.arrowText, { color: actionStyle.badgeText.color }]}>→</Text>
+        <View className="justify-center pr-4">
+          <Text className="text-xl font-light" style={{ color: actionStyle.badgeText.color }}>
+            →
+          </Text>
         </View>
       </TouchableOpacity>
     </Animated.View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: "row",
-    backgroundColor: tokens.colors.bg.secondary,
-    borderWidth: 1,
-    borderColor: tokens.colors.border.default,
-    borderRadius: 2,
-    marginBottom: 12,
-    overflow: "hidden",
-  },
-  expired: {
-    borderColor: tokens.colors.text.muted,
-    opacity: 0.6,
-  },
-  urgent: {
-    borderColor: tokens.colors.accent.crimson,
-    shadowColor: tokens.colors.accent.crimson,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 5,
-  },
-  accentBar: {
-    width: 4,
-    backgroundColor: tokens.colors.accent.cyan,
-  },
-  content: {
-    flex: 1,
-    padding: 16,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-  },
-  actionType: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  amount: {
-    alignItems: "flex-end",
-  },
-  amountText: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: tokens.colors.text.primary,
-    letterSpacing: -0.5,
-    fontVariant: ["tabular-nums"],
-  },
-  coinText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: tokens.colors.text.secondary,
-    letterSpacing: 1,
-    marginTop: 2,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: tokens.colors.border.default,
-    marginVertical: 12,
-  },
-  footer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  idContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  idLabel: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: tokens.colors.text.muted,
-    letterSpacing: 1,
-    marginRight: 8,
-  },
-  idValue: {
-    fontSize: 11,
-    fontWeight: "500",
-    color: tokens.colors.text.tertiary,
-    letterSpacing: 0.5,
-    fontFamily: "monospace",
-  },
-  timeContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  timeDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginRight: 6,
-  },
-  timeText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: tokens.colors.text.secondary,
-    fontVariant: ["tabular-nums"],
-    letterSpacing: 0.5,
-  },
-  expiredBadge: {
-    backgroundColor: tokens.colors.text.muted,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  expiredText: {
-    fontSize: 10,
-    fontWeight: "800",
-    color: tokens.colors.bg.primary,
-    letterSpacing: 1,
-  },
-  arrow: {
-    justifyContent: "center",
-    paddingRight: 16,
-  },
-  arrowText: {
-    fontSize: 20,
-    fontWeight: "300",
-  },
-});

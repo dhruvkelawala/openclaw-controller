@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from "react";
-import { View, Animated, StyleSheet, Dimensions } from "react-native";
-import { tokens } from "./design-tokens";
+import { View, Animated, Dimensions } from "react-native";
+import { tokens } from "../lib/design-tokens";
+import { cn } from "../lib/cn";
 
 const { width, height } = Dimensions.get("window");
 
@@ -28,68 +29,60 @@ export function AnimatedBackground() {
   }, []);
 
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+    <View className="absolute inset-0" pointerEvents="none">
       {/* Base gradient overlay */}
-      <View style={styles.gradientOverlay} />
+      <View className="absolute inset-0" style={{ backgroundColor: tokens.colors.bg.primary }} />
 
       {/* Grid lines */}
-      <Animated.View style={[styles.gridContainer, { opacity: gridOpacity }]}>
+      <Animated.View className="absolute inset-0" style={{ opacity: gridOpacity }}>
         {/* Horizontal lines */}
         {Array.from({ length: 20 }).map((_, i) => (
           <View
             key={`h-${i}`}
-            style={[
-              styles.gridLine,
-              {
-                top: (height / 20) * i,
-                width: "100%",
-                height: 1,
-              },
-            ]}
+            className="absolute w-full"
+            style={{
+              top: (height / 20) * i,
+              height: 1,
+              backgroundColor: tokens.colors.accent.cyan,
+            }}
           />
         ))}
         {/* Vertical lines */}
         {Array.from({ length: 15 }).map((_, i) => (
           <View
             key={`v-${i}`}
-            style={[
-              styles.gridLine,
-              {
-                left: (width / 15) * i,
-                height: "100%",
-                width: 1,
-              },
-            ]}
+            className="absolute h-full"
+            style={{
+              left: (width / 15) * i,
+              width: 1,
+              backgroundColor: tokens.colors.accent.cyan,
+            }}
           />
         ))}
       </Animated.View>
 
       {/* Accent glow spots */}
       <Animated.View
-        style={[
-          styles.glowSpot,
-          {
-            top: height * 0.1,
-            right: -100,
-            backgroundColor: tokens.colors.accent.cyan,
-            transform: [{ scale: pulseAnim }],
-          },
-        ]}
+        className="absolute w-[300px] h-[300px] rounded-full opacity-[0.15]"
+        style={{
+          top: height * 0.1,
+          right: -100,
+          backgroundColor: tokens.colors.accent.cyan,
+          transform: [{ scale: pulseAnim }],
+        }}
       />
       <Animated.View
-        style={[
-          styles.glowSpot,
-          {
-            bottom: height * 0.2,
-            left: -100,
-            backgroundColor: tokens.colors.accent.crimson,
-            transform: [{ scale: pulseAnim }],
-          },
-        ]}
+        className="absolute w-[300px] h-[300px] rounded-full opacity-[0.15]"
+        style={{
+          bottom: height * 0.2,
+          left: -100,
+          backgroundColor: tokens.colors.accent.crimson,
+          transform: [{ scale: pulseAnim }],
+        }}
       />
 
       {/* Noise texture overlay */}
-      <View style={styles.noiseOverlay} />
+      <View className="absolute inset-0 opacity-[0.03]" style={{ backgroundColor: "#000" }} />
     </View>
   );
 }
@@ -110,14 +103,23 @@ export function ScanLines() {
 
   return (
     <Animated.View
-      style={[styles.scanLine, { transform: [{ translateY }] }]}
+      className="absolute left-0 right-0 h-[2px]"
+      style={{
+        transform: [{ translateY }],
+        backgroundColor: tokens.colors.accent.cyan,
+        opacity: 0.1,
+        shadowColor: tokens.colors.accent.cyan,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.5,
+        shadowRadius: 10,
+      }}
       pointerEvents="none"
     />
   );
 }
 
 // Animated counter for numbers
-export function AnimatedCounter({ value, style }: { value: number; style?: object }) {
+export function AnimatedCounter({ value, className }: { value: number; className?: string }) {
   const animatedValue = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -130,44 +132,5 @@ export function AnimatedCounter({ value, style }: { value: number; style?: objec
   }, [value]);
 
   // Simplified - in real implementation, would use animated number interpolation
-  return <Animated.Text style={style}>{value}</Animated.Text>;
+  return <Animated.Text className={cn(className)}>{value}</Animated.Text>;
 }
-
-const styles = StyleSheet.create({
-  gradientOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: tokens.colors.bg.primary,
-  },
-  gridContainer: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  gridLine: {
-    position: "absolute",
-    backgroundColor: tokens.colors.accent.cyan,
-  },
-  glowSpot: {
-    position: "absolute",
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    opacity: 0.15,
-    filter: "blur(100px)",
-  },
-  noiseOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    opacity: 0.03,
-    backgroundColor: "#000",
-  },
-  scanLine: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    height: 2,
-    backgroundColor: tokens.colors.accent.cyan,
-    opacity: 0.1,
-    shadowColor: tokens.colors.accent.cyan,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-  },
-});

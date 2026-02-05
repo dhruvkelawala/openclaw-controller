@@ -1,13 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import {
-  View,
-  Text,
-  FlatList,
-  RefreshControl,
-  TouchableOpacity,
-  Animated,
-  StyleSheet,
-} from "react-native";
+import { View, Text, FlatList, RefreshControl, TouchableOpacity, Animated } from "react-native";
 import { router } from "expo-router";
 import { useAuth } from "../hooks/useAuth";
 import { usePendingApprovals } from "../hooks/useApprovalsQuery";
@@ -16,6 +8,7 @@ import { ApprovalCard } from "../components/ApprovalCard";
 import { AnimatedBackground, ScanLines } from "../components/AnimatedBackground";
 import { ApprovalAction } from "../schemas";
 import { tokens } from "../lib/design-tokens";
+
 export default function PendingApprovalsScreen() {
   const { deviceToken, isLoading: authLoading, isRegistered } = useAuth();
   const {
@@ -75,36 +68,86 @@ export default function PendingApprovalsScreen() {
   // Show welcome/setup state
   if (!isRegistered && !authLoading) {
     return (
-      <View style={styles.screen}>
+      <View className="flex-1" style={{ backgroundColor: tokens.colors.bg.primary }}>
         <AnimatedBackground />
-        <View style={styles.welcomeContainer}>
+        <View className="flex-1 justify-center items-center px-8">
           <Animated.View style={{ transform: [{ scale: statsScale }] }}>
-            <View style={styles.logoBox}>
-              <Text style={styles.logoIcon}>◈</Text>
+            <View
+              className="w-20 h-20 justify-center items-center mb-8 rounded-sm border-2"
+              style={{
+                borderColor: tokens.colors.accent.cyan,
+                shadowColor: tokens.colors.accent.cyan,
+                shadowOffset: { width: 0, height: 0 },
+                shadowOpacity: 0.5,
+                shadowRadius: 20,
+                elevation: 10,
+              }}
+            >
+              <Text className="text-4xl font-light" style={{ color: tokens.colors.accent.cyan }}>
+                ◈
+              </Text>
             </View>
           </Animated.View>
 
-          <Text style={styles.welcomeTitle}>OPENCLAW</Text>
-          <Text style={styles.welcomeSubtitle}>CONTROLLER</Text>
+          <Text
+            className="text-5xl font-black tracking-[8px]"
+            style={{ color: tokens.colors.text.primary }}
+          >
+            OPENCLAW
+          </Text>
+          <Text
+            className="text-lg font-bold tracking-[12px] mt-1"
+            style={{ color: tokens.colors.accent.cyan }}
+          >
+            CONTROLLER
+          </Text>
 
-          <Text style={styles.welcomeDescription}>
+          <Text
+            className="text-sm text-center mt-6 leading-6 tracking-wide"
+            style={{ color: tokens.colors.text.secondary }}
+          >
             High-security approval gateway for{"\n"}autonomous crypto operations
           </Text>
 
           {!permissionStatus || permissionStatus !== "granted" ? (
             <TouchableOpacity
               onPress={requestPermissions}
-              style={styles.enableButton}
+              className="mt-12 py-4 px-8 rounded-sm relative overflow-hidden"
+              style={{ backgroundColor: tokens.colors.accent.cyan }}
               activeOpacity={0.8}
             >
-              <Text style={styles.enableButtonText}>ENABLE NOTIFICATIONS</Text>
-              <View style={styles.buttonAccent} />
+              <Text
+                className="text-sm font-black tracking-[2px]"
+                style={{ color: tokens.colors.bg.primary }}
+              >
+                ENABLE NOTIFICATIONS
+              </Text>
+              <View className="absolute bottom-0 left-0 right-0 h-[3px] bg-black/20" />
             </TouchableOpacity>
           ) : (
-            <View style={styles.readyContainer}>
-              <View style={styles.readyDot} />
-              <Text style={styles.readyText}>SYSTEM READY</Text>
-              <Text style={styles.waitingText}>Waiting for approval requests...</Text>
+            <View className="mt-12 items-center">
+              <View
+                className="w-3 h-3 rounded-full mb-4"
+                style={{
+                  backgroundColor: tokens.colors.accent.lime,
+                  shadowColor: tokens.colors.accent.lime,
+                  shadowOffset: { width: 0, height: 0 },
+                  shadowOpacity: 0.8,
+                  shadowRadius: 10,
+                }}
+              />
+              <Text
+                className="text-base font-extrabold tracking-[4px]"
+                style={{ color: tokens.colors.accent.lime }}
+              >
+                SYSTEM READY
+              </Text>
+              <Text
+                className="text-sm mt-2 tracking-wide"
+                style={{ color: tokens.colors.text.tertiary }}
+              >
+                Waiting for approval requests...
+              </Text>
             </View>
           )}
         </View>
@@ -118,54 +161,131 @@ export default function PendingApprovalsScreen() {
   }
 
   return (
-    <View style={styles.screen}>
+    <View className="flex-1" style={{ backgroundColor: tokens.colors.bg.primary }}>
       <AnimatedBackground />
       <ScanLines />
 
       {/* Header */}
       <Animated.View
-        style={[
-          styles.header,
-          {
-            opacity: headerOpacity,
-            transform: [{ translateY: headerSlide }],
-          },
-        ]}
+        className="pt-16 px-5 pb-4 border-b"
+        style={{
+          backgroundColor: tokens.colors.bg.primary,
+          borderBottomColor: tokens.colors.border.default,
+          opacity: headerOpacity,
+          transform: [{ translateY: headerSlide }],
+        }}
       >
-        <View style={styles.headerTop}>
+        <View className="flex-row justify-between items-start mb-5">
           <View>
-            <Text style={styles.headerTitle}>PENDING</Text>
-            <Text style={styles.headerSubtitle}>APPROVAL QUEUE</Text>
+            <Text
+              className="text-[28px] font-black tracking-tight"
+              style={{ color: tokens.colors.text.primary }}
+            >
+              PENDING
+            </Text>
+            <Text
+              className="text-xs font-bold tracking-[4px] mt-1"
+              style={{ color: tokens.colors.accent.cyan }}
+            >
+              APPROVAL QUEUE
+            </Text>
           </View>
-          <View style={styles.connectionStatus}>
-            <View style={styles.connectionDot} />
-            <Text style={styles.connectionText}>LIVE</Text>
+          <View
+            className="flex-row items-center px-3 py-1.5 rounded-sm border"
+            style={{
+              backgroundColor: tokens.colors.bg.secondary,
+              borderColor: tokens.colors.border.default,
+            }}
+          >
+            <View
+              className="w-1.5 h-1.5 rounded-full mr-1.5"
+              style={{
+                backgroundColor: tokens.colors.accent.lime,
+                shadowColor: tokens.colors.accent.lime,
+                shadowOffset: { width: 0, height: 0 },
+                shadowOpacity: 0.8,
+                shadowRadius: 5,
+              }}
+            />
+            <Text
+              className="text-[10px] font-extrabold tracking-wide"
+              style={{ color: tokens.colors.text.secondary }}
+            >
+              LIVE
+            </Text>
           </View>
         </View>
 
         {/* Stats */}
-        <Animated.View style={[styles.statsContainer, { transform: [{ scale: statsScale }] }]}>
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>{pendingApprovals.length}</Text>
-            <Text style={styles.statLabel}>PENDING</Text>
+        <Animated.View className="flex-row gap-3" style={{ transform: [{ scale: statsScale }] }}>
+          <View
+            className="flex-1 items-center p-3 rounded-sm border"
+            style={{
+              backgroundColor: tokens.colors.bg.secondary,
+              borderColor: tokens.colors.border.default,
+            }}
+          >
+            <Text
+              className="text-xl font-extrabold"
+              style={{
+                color: tokens.colors.text.primary,
+                fontVariant: ["tabular-nums"],
+              }}
+            >
+              {pendingApprovals.length}
+            </Text>
+            <Text
+              className="text-[9px] font-bold tracking-wide mt-1"
+              style={{ color: tokens.colors.text.tertiary }}
+            >
+              PENDING
+            </Text>
           </View>
-          <View style={[styles.statBox, styles.statBoxMiddle]}>
-            <Text style={styles.statValue}>
+          <View
+            className="flex-1 items-center p-3 rounded-sm border"
+            style={{
+              backgroundColor: tokens.colors.accent.crimsonGlow,
+              borderColor: tokens.colors.accent.crimson,
+            }}
+          >
+            <Text
+              className="text-xl font-extrabold"
+              style={{
+                color: tokens.colors.text.primary,
+                fontVariant: ["tabular-nums"],
+              }}
+            >
               {
                 pendingApprovals.filter(
                   (a) => Date.now() > a.expiry - 60000 && Date.now() < a.expiry
                 ).length
               }
             </Text>
-            <Text style={[styles.statLabel, { color: tokens.colors.accent.crimson }]}>URGENT</Text>
+            <Text
+              className="text-[9px] font-bold tracking-wide mt-1"
+              style={{ color: tokens.colors.accent.crimson }}
+            >
+              URGENT
+            </Text>
           </View>
           <TouchableOpacity
-            style={[styles.statBox, styles.statBoxClickable]}
+            className="flex-1 items-center p-3 rounded-sm border"
+            style={{
+              backgroundColor: tokens.colors.bg.tertiary,
+              borderColor: tokens.colors.border.default,
+            }}
             onPress={navigateToHistory}
             activeOpacity={0.7}
           >
-            <Text style={styles.statValue}>HISTORY</Text>
-            <Text style={styles.statLabel}>VIEW →</Text>
+            <Text className="text-xl font-extrabold" style={{ color: tokens.colors.text.primary }}>
+              HISTORY
+            </Text>
+            <Text
+              className="text-[9px] font-bold tracking-wide mt-1"
+              style={{ color: tokens.colors.text.tertiary }}
+            >
+              VIEW →
+            </Text>
           </TouchableOpacity>
         </Animated.View>
       </Animated.View>
@@ -175,11 +295,11 @@ export default function PendingApprovalsScreen() {
         data={pendingApprovals}
         keyExtractor={(item) => item.id}
         renderItem={({ item, index }) => (
-          <View style={styles.cardContainer}>
+          <View className="px-4">
             <ApprovalCard approval={item} onPress={handleApprovalPress} index={index} />
           </View>
         )}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={{ paddingTop: 16, paddingBottom: 100 }}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
@@ -189,12 +309,25 @@ export default function PendingApprovalsScreen() {
           />
         }
         ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <View style={styles.emptyIcon}>
-              <Text style={styles.emptyIconText}>◉</Text>
+          <View className="items-center mt-20">
+            <View
+              className="w-16 h-16 justify-center items-center rounded-full mb-6 border"
+              style={{ borderColor: tokens.colors.border.default }}
+            >
+              <Text className="text-3xl" style={{ color: tokens.colors.text.muted }}>
+                ◉
+              </Text>
             </View>
-            <Text style={styles.emptyTitle}>QUEUE EMPTY</Text>
-            <Text style={styles.emptyDescription}>
+            <Text
+              className="text-lg font-extrabold tracking-[4px] mb-2"
+              style={{ color: tokens.colors.text.secondary }}
+            >
+              QUEUE EMPTY
+            </Text>
+            <Text
+              className="text-sm text-center leading-5"
+              style={{ color: tokens.colors.text.tertiary }}
+            >
               No pending approvals at this time{"\n"}
               Pull to refresh or wait for new requests
             </Text>
@@ -203,294 +336,63 @@ export default function PendingApprovalsScreen() {
       />
 
       {/* Bottom Navigation */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItemActive} activeOpacity={0.7}>
-          <Text style={styles.navIconActive}>◈</Text>
-          <Text style={styles.navLabelActive}>QUEUE</Text>
+      <View
+        className="absolute bottom-0 left-0 right-0 flex-row py-3 pb-6 border-t"
+        style={{
+          backgroundColor: tokens.colors.bg.primary,
+          borderTopColor: tokens.colors.border.default,
+        }}
+      >
+        <TouchableOpacity className="flex-1 items-center" activeOpacity={0.7}>
+          <Text
+            className="text-xl mb-1"
+            style={{
+              color: tokens.colors.accent.cyan,
+              textShadowColor: tokens.colors.accent.cyan,
+              textShadowOffset: { width: 0, height: 0 },
+              textShadowRadius: 10,
+            }}
+          >
+            ◈
+          </Text>
+          <Text
+            className="text-[10px] font-extrabold tracking-wide"
+            style={{ color: tokens.colors.accent.cyan }}
+          >
+            QUEUE
+          </Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={navigateToHistory} activeOpacity={0.7}>
-          <Text style={styles.navIcon}>◉</Text>
-          <Text style={styles.navLabel}>LOG</Text>
+        <TouchableOpacity
+          className="flex-1 items-center"
+          onPress={navigateToHistory}
+          activeOpacity={0.7}
+        >
+          <Text className="text-xl mb-1" style={{ color: tokens.colors.text.muted }}>
+            ◉
+          </Text>
+          <Text
+            className="text-[10px] font-bold tracking-wide"
+            style={{ color: tokens.colors.text.muted }}
+          >
+            LOG
+          </Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={navigateToSettings} activeOpacity={0.7}>
-          <Text style={styles.navIcon}>◎</Text>
-          <Text style={styles.navLabel}>CONFIG</Text>
+        <TouchableOpacity
+          className="flex-1 items-center"
+          onPress={navigateToSettings}
+          activeOpacity={0.7}
+        >
+          <Text className="text-xl mb-1" style={{ color: tokens.colors.text.muted }}>
+            ◎
+          </Text>
+          <Text
+            className="text-[10px] font-bold tracking-wide"
+            style={{ color: tokens.colors.text.muted }}
+          >
+            CONFIG
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: tokens.colors.bg.primary,
-  },
-  welcomeContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 32,
-  },
-  logoBox: {
-    width: 80,
-    height: 80,
-    borderWidth: 2,
-    borderColor: tokens.colors.accent.cyan,
-    borderRadius: 2,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 32,
-    shadowColor: tokens.colors.accent.cyan,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  logoIcon: {
-    fontSize: 40,
-    color: tokens.colors.accent.cyan,
-    fontWeight: "300",
-  },
-  welcomeTitle: {
-    fontSize: 42,
-    fontWeight: "900",
-    letterSpacing: 8,
-    color: tokens.colors.text.primary,
-  },
-  welcomeSubtitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    letterSpacing: 12,
-    color: tokens.colors.accent.cyan,
-    marginTop: 4,
-  },
-  welcomeDescription: {
-    fontSize: 14,
-    color: tokens.colors.text.secondary,
-    textAlign: "center",
-    marginTop: 24,
-    lineHeight: 22,
-    letterSpacing: 0.5,
-  },
-  enableButton: {
-    marginTop: 48,
-    backgroundColor: tokens.colors.accent.cyan,
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 2,
-    position: "relative",
-    overflow: "hidden",
-  },
-  enableButtonText: {
-    color: tokens.colors.bg.primary,
-    fontSize: 14,
-    fontWeight: "900",
-    letterSpacing: 2,
-  },
-  buttonAccent: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 3,
-    backgroundColor: "rgba(0,0,0,0.2)",
-  },
-  readyContainer: {
-    marginTop: 48,
-    alignItems: "center",
-  },
-  readyDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: tokens.colors.accent.lime,
-    shadowColor: tokens.colors.accent.lime,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 10,
-    marginBottom: 16,
-  },
-  readyText: {
-    fontSize: 16,
-    fontWeight: "800",
-    letterSpacing: 4,
-    color: tokens.colors.accent.lime,
-  },
-  waitingText: {
-    fontSize: 13,
-    color: tokens.colors.text.tertiary,
-    marginTop: 8,
-    letterSpacing: 0.5,
-  },
-  header: {
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-    backgroundColor: tokens.colors.bg.primary,
-    borderBottomWidth: 1,
-    borderBottomColor: tokens.colors.border.default,
-  },
-  headerTop: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 20,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: "900",
-    letterSpacing: -1,
-    color: tokens.colors.text.primary,
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 4,
-    color: tokens.colors.accent.cyan,
-    marginTop: 4,
-  },
-  connectionStatus: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: tokens.colors.bg.secondary,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 2,
-    borderWidth: 1,
-    borderColor: tokens.colors.border.default,
-  },
-  connectionDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: tokens.colors.accent.lime,
-    marginRight: 6,
-    shadowColor: tokens.colors.accent.lime,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 5,
-  },
-  connectionText: {
-    fontSize: 10,
-    fontWeight: "800",
-    letterSpacing: 1,
-    color: tokens.colors.text.secondary,
-  },
-  statsContainer: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  statBox: {
-    flex: 1,
-    backgroundColor: tokens.colors.bg.secondary,
-    borderWidth: 1,
-    borderColor: tokens.colors.border.default,
-    borderRadius: 2,
-    padding: 12,
-    alignItems: "center",
-  },
-  statBoxMiddle: {
-    borderColor: tokens.colors.accent.crimson,
-    backgroundColor: tokens.colors.accent.crimsonGlow,
-  },
-  statBoxClickable: {
-    backgroundColor: tokens.colors.bg.tertiary,
-  },
-  statValue: {
-    fontSize: 20,
-    fontWeight: "800",
-    color: tokens.colors.text.primary,
-    fontVariant: ["tabular-nums"],
-  },
-  statLabel: {
-    fontSize: 9,
-    fontWeight: "700",
-    letterSpacing: 1,
-    color: tokens.colors.text.tertiary,
-    marginTop: 4,
-  },
-  cardContainer: {
-    paddingHorizontal: 16,
-  },
-  listContent: {
-    paddingTop: 16,
-    paddingBottom: 100,
-  },
-  emptyContainer: {
-    alignItems: "center",
-    marginTop: 80,
-  },
-  emptyIcon: {
-    width: 64,
-    height: 64,
-    borderWidth: 1,
-    borderColor: tokens.colors.border.default,
-    borderRadius: 32,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 24,
-  },
-  emptyIconText: {
-    fontSize: 28,
-    color: tokens.colors.text.muted,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: "800",
-    letterSpacing: 4,
-    color: tokens.colors.text.secondary,
-    marginBottom: 8,
-  },
-  emptyDescription: {
-    fontSize: 13,
-    color: tokens.colors.text.tertiary,
-    textAlign: "center",
-    lineHeight: 20,
-  },
-  bottomNav: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: "row",
-    backgroundColor: tokens.colors.bg.primary,
-    borderTopWidth: 1,
-    borderTopColor: tokens.colors.border.default,
-    paddingVertical: 12,
-    paddingBottom: 24,
-  },
-  navItem: {
-    flex: 1,
-    alignItems: "center",
-  },
-  navItemActive: {
-    flex: 1,
-    alignItems: "center",
-  },
-  navIcon: {
-    fontSize: 20,
-    color: tokens.colors.text.muted,
-    marginBottom: 4,
-  },
-  navIconActive: {
-    fontSize: 20,
-    color: tokens.colors.accent.cyan,
-    marginBottom: 4,
-    textShadowColor: tokens.colors.accent.cyan,
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 10,
-  },
-  navLabel: {
-    fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 1,
-    color: tokens.colors.text.muted,
-  },
-  navLabelActive: {
-    fontSize: 10,
-    fontWeight: "800",
-    letterSpacing: 1,
-    color: tokens.colors.accent.cyan,
-  },
-});

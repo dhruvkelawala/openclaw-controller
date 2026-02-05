@@ -1,15 +1,8 @@
 import React, { useState, useRef } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-  Animated,
-  StyleSheet,
-} from "react-native";
+import { View, Text, TouchableOpacity, ActivityIndicator, Alert, Animated } from "react-native";
 import * as LocalAuthentication from "expo-local-authentication";
 import { tokens } from "../lib/design-tokens";
+import { cn } from "../lib/cn";
 
 interface ActionButtonsProps {
   onApprove: () => Promise<boolean>;
@@ -116,10 +109,19 @@ export function ActionButtons({ onApprove, onReject, disabled = false }: ActionB
 
   if (isLoading || isAuthenticating) {
     return (
-      <View style={styles.loadingContainer}>
-        <View style={styles.loadingBox}>
+      <View className="flex-row gap-3">
+        <View
+          className="flex-1 items-center py-6 rounded-sm border"
+          style={{
+            backgroundColor: tokens.colors.bg.secondary,
+            borderColor: tokens.colors.border.default,
+          }}
+        >
           <ActivityIndicator color={tokens.colors.accent.cyan} size="large" />
-          <Text style={styles.loadingText}>
+          <Text
+            className="text-xs font-bold tracking-wide mt-3"
+            style={{ color: tokens.colors.text.secondary }}
+          >
             {isAuthenticating ? "AUTHENTICATING..." : "PROCESSING..."}
           </Text>
         </View>
@@ -128,136 +130,78 @@ export function ActionButtons({ onApprove, onReject, disabled = false }: ActionB
   }
 
   return (
-    <View style={styles.container}>
+    <View className="flex-row gap-3">
       {/* Reject Button */}
-      <Animated.View style={[styles.buttonWrapper, { transform: [{ scale: rejectScale }] }]}>
+      <Animated.View className="flex-1 relative" style={{ transform: [{ scale: rejectScale }] }}>
         <Animated.View
-          style={[
-            styles.glowOverlay,
-            styles.rejectGlow,
-            {
-              opacity: rejectGlow,
-              shadowColor: tokens.colors.accent.crimson,
-            },
-          ]}
+          className="absolute inset-0 rounded-sm"
+          style={{
+            opacity: rejectGlow,
+            shadowColor: tokens.colors.accent.crimson,
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 0.8,
+            shadowRadius: 20,
+            elevation: 10,
+            backgroundColor: tokens.colors.accent.crimsonGlow,
+          }}
         />
         <TouchableOpacity
           onPress={() => authenticateAndExecute(onReject, "REJECT", rejectScale, rejectGlow)}
           disabled={disabled}
-          style={[styles.button, styles.rejectButton, disabled && styles.disabled]}
+          className={cn(
+            "py-5 items-center justify-center rounded-sm border-2 relative overflow-hidden",
+            disabled && "opacity-40"
+          )}
+          style={{
+            backgroundColor: tokens.colors.bg.secondary,
+            borderColor: tokens.colors.accent.crimson,
+          }}
           activeOpacity={0.8}
         >
-          <Text style={styles.rejectText}>REJECT</Text>
-          <View style={styles.buttonLine} />
+          <Text
+            className="text-sm font-black tracking-[2px]"
+            style={{ color: tokens.colors.accent.crimson }}
+          >
+            REJECT
+          </Text>
         </TouchableOpacity>
       </Animated.View>
 
       {/* Approve Button */}
-      <Animated.View style={[styles.buttonWrapper, { transform: [{ scale: approveScale }] }]}>
+      <Animated.View className="flex-1 relative" style={{ transform: [{ scale: approveScale }] }}>
         <Animated.View
-          style={[
-            styles.glowOverlay,
-            styles.approveGlow,
-            {
-              opacity: approveGlow,
-              shadowColor: tokens.colors.accent.lime,
-            },
-          ]}
+          className="absolute inset-0 rounded-sm"
+          style={{
+            opacity: approveGlow,
+            shadowColor: tokens.colors.accent.lime,
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 0.8,
+            shadowRadius: 20,
+            elevation: 10,
+            backgroundColor: tokens.colors.accent.limeGlow,
+          }}
         />
         <TouchableOpacity
           onPress={() => authenticateAndExecute(onApprove, "APPROVE", approveScale, approveGlow)}
           disabled={disabled}
-          style={[styles.button, styles.approveButton, disabled && styles.disabled]}
+          className={cn(
+            "py-5 items-center justify-center rounded-sm border-2 relative overflow-hidden",
+            disabled && "opacity-40"
+          )}
+          style={{
+            backgroundColor: tokens.colors.bg.secondary,
+            borderColor: tokens.colors.accent.lime,
+          }}
           activeOpacity={0.8}
         >
-          <Text style={styles.approveText}>APPROVE</Text>
-          <View style={styles.buttonLine} />
+          <Text
+            className="text-sm font-black tracking-[2px]"
+            style={{ color: tokens.colors.accent.lime }}
+          >
+            APPROVE
+          </Text>
         </TouchableOpacity>
       </Animated.View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  buttonWrapper: {
-    flex: 1,
-    position: "relative",
-  },
-  glowOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 2,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  approveGlow: {
-    backgroundColor: tokens.colors.accent.limeGlow,
-  },
-  rejectGlow: {
-    backgroundColor: tokens.colors.accent.crimsonGlow,
-  },
-  button: {
-    paddingVertical: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 2,
-    borderWidth: 2,
-    position: "relative",
-    overflow: "hidden",
-  },
-  approveButton: {
-    backgroundColor: tokens.colors.bg.secondary,
-    borderColor: tokens.colors.accent.lime,
-  },
-  rejectButton: {
-    backgroundColor: tokens.colors.bg.secondary,
-    borderColor: tokens.colors.accent.crimson,
-  },
-  disabled: {
-    opacity: 0.4,
-  },
-  approveText: {
-    color: tokens.colors.accent.lime,
-    fontSize: 14,
-    fontWeight: "900",
-    letterSpacing: 2,
-  },
-  rejectText: {
-    color: tokens.colors.accent.crimson,
-    fontSize: 14,
-    fontWeight: "900",
-    letterSpacing: 2,
-  },
-  buttonLine: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 3,
-  },
-  loadingContainer: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  loadingBox: {
-    flex: 1,
-    backgroundColor: tokens.colors.bg.secondary,
-    borderWidth: 1,
-    borderColor: tokens.colors.border.default,
-    borderRadius: 2,
-    paddingVertical: 24,
-    alignItems: "center",
-  },
-  loadingText: {
-    color: tokens.colors.text.secondary,
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 1,
-    marginTop: 12,
-  },
-});

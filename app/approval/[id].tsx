@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View, Text, ScrollView, Alert, Animated, StyleSheet } from "react-native";
+import { View, Text, ScrollView, Alert, Animated } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { useAuth } from "../../hooks/useAuth";
 import { useApproveAction, useRejectAction } from "../../hooks/useApprovalsQuery";
@@ -119,10 +119,15 @@ export default function ApprovalDetailScreen() {
 
   if (!action) {
     return (
-      <View style={styles.screen}>
+      <View className="flex-1" style={{ backgroundColor: tokens.colors.bg.primary }}>
         <AnimatedBackground />
-        <View style={styles.loading}>
-          <Text style={styles.loadingText}>LOADING...</Text>
+        <View className="flex-1 justify-center items-center">
+          <Text
+            className="text-sm font-bold tracking-[4px]"
+            style={{ color: tokens.colors.text.tertiary }}
+          >
+            LOADING...
+          </Text>
         </View>
       </View>
     );
@@ -136,54 +141,104 @@ export default function ApprovalDetailScreen() {
   const isCompleted = action.status === "approved" || action.status === "rejected";
   const isUrgent = timeLeft < 60000 && !isExpired;
 
+  const getStatusColor = () => {
+    if (isCompleted) {
+      return action.status === "approved"
+        ? tokens.colors.accent.lime
+        : tokens.colors.accent.crimson;
+    }
+    if (isExpired) return tokens.colors.text.muted;
+    if (isUrgent) return tokens.colors.accent.crimson;
+    return tokens.colors.accent.amber;
+  };
+
+  const getStatusBg = () => {
+    if (isCompleted) {
+      return action.status === "approved"
+        ? tokens.colors.accent.limeGlow
+        : tokens.colors.accent.crimsonGlow;
+    }
+    if (isExpired) return tokens.colors.bg.tertiary;
+    if (isUrgent) return tokens.colors.accent.crimsonGlow;
+    return tokens.colors.accent.amberGlow;
+  };
+
+  const getStatusBorderColor = () => {
+    if (isCompleted) {
+      return action.status === "approved"
+        ? tokens.colors.accent.lime
+        : tokens.colors.accent.crimson;
+    }
+    if (isExpired) return tokens.colors.text.muted;
+    if (isUrgent) return tokens.colors.accent.crimson;
+    return tokens.colors.accent.amber;
+  };
+
+  const getStatusText = () => {
+    if (isCompleted) return action.status.toUpperCase();
+    if (isExpired) return "EXPIRED";
+    if (isUrgent) return "URGENT";
+    return "PENDING";
+  };
+
   return (
-    <View style={styles.screen}>
+    <View className="flex-1" style={{ backgroundColor: tokens.colors.bg.primary }}>
       <AnimatedBackground />
       <ScanLines />
 
       <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        className="flex-1"
+        contentContainerStyle={{ paddingTop: 60, paddingHorizontal: 20, paddingBottom: 200 }}
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
         <Animated.View
-          style={[
-            styles.header,
-            {
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }],
-            },
-          ]}
+          className="mb-8"
+          style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}
         >
-          <Text style={styles.headerLabel}>APPROVAL DETAIL</Text>
-          <View style={styles.idContainer}>
-            <Text style={styles.idValue}>{action.id.slice(0, 16).toUpperCase()}</Text>
-            <Text style={styles.idEllipsis}>...</Text>
+          <Text
+            className="text-[11px] font-extrabold tracking-[3px] mb-2"
+            style={{ color: tokens.colors.text.tertiary }}
+          >
+            APPROVAL DETAIL
+          </Text>
+          <View className="flex-row items-center">
+            <Text
+              className="text-sm font-semibold tracking-wide"
+              style={{ color: tokens.colors.text.secondary, fontFamily: "monospace" }}
+            >
+              {action.id.slice(0, 16).toUpperCase()}
+            </Text>
+            <Text className="text-sm" style={{ color: tokens.colors.text.tertiary }}>
+              ...
+            </Text>
           </View>
         </Animated.View>
 
         {/* Action Icon */}
         <Animated.View
-          style={[
-            styles.iconContainer,
-            {
-              opacity: fadeAnim,
-              transform: [{ scale: iconScale }],
-            },
-          ]}
+          className="items-center mb-8"
+          style={{ opacity: fadeAnim, transform: [{ scale: iconScale }] }}
         >
           <Animated.View
-            style={[
-              styles.iconGlow,
-              {
-                opacity: glowAnim,
-                shadowColor: actionStyle.badgeText.color,
-              },
-            ]}
+            className="absolute w-[120px] h-[120px] rounded-full"
+            style={{
+              opacity: glowAnim,
+              shadowColor: actionStyle.badgeText.color,
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: 0.6,
+              shadowRadius: 40,
+              elevation: 20,
+            }}
           />
-          <View style={[styles.iconBox, { borderColor: actionStyle.badgeText.color }]}>
-            <Text style={[styles.iconText, { color: actionStyle.badgeText.color }]}>
+          <View
+            className="w-[100px] h-[100px] justify-center items-center rounded-sm border-2"
+            style={{
+              borderColor: actionStyle.badgeText.color,
+              backgroundColor: tokens.colors.bg.secondary,
+            }}
+          >
+            <Text className="text-5xl font-light" style={{ color: actionStyle.badgeText.color }}>
               {actionStyle.badgeText.color === tokens.colors.accent.cyan
                 ? "⇄"
                 : actionStyle.badgeText.color === tokens.colors.accent.lime
@@ -195,98 +250,150 @@ export default function ApprovalDetailScreen() {
                       : "◎"}
             </Text>
           </View>
-          <View style={[styles.actionBadge, { borderColor: actionStyle.badgeText.color }]}>
-            <Text style={[styles.actionBadgeText, { color: actionStyle.badgeText.color }]}>
+          <View
+            className="mt-4 px-4 py-1.5 rounded-sm border"
+            style={{
+              borderColor: actionStyle.badgeText.color,
+              backgroundColor: tokens.colors.bg.secondary,
+            }}
+          >
+            <Text
+              className="text-xs font-extrabold tracking-[2px]"
+              style={{ color: actionStyle.badgeText.color }}
+            >
               {action.action.toUpperCase()}
             </Text>
           </View>
         </Animated.View>
 
         {/* Amount Display */}
-        <Animated.View style={[styles.amountContainer, { opacity: fadeAnim }]}>
-          <Text style={styles.amountLabel}>AMOUNT</Text>
-          <View style={styles.amountRow}>
-            <Text style={styles.amountValue}>{action.amount}</Text>
-            <Text style={styles.amountCoin}>{action.coin}</Text>
+        <Animated.View
+          className="items-center mb-8 p-6 rounded-sm border"
+          style={{
+            opacity: fadeAnim,
+            backgroundColor: tokens.colors.bg.secondary,
+            borderColor: tokens.colors.border.default,
+          }}
+        >
+          <Text
+            className="text-[10px] font-extrabold tracking-[3px] mb-3"
+            style={{ color: tokens.colors.text.tertiary }}
+          >
+            AMOUNT
+          </Text>
+          <View className="flex-row items-baseline">
+            <Text
+              className="text-[42px] font-extrabold tracking-tight"
+              style={{
+                color: tokens.colors.text.primary,
+                fontVariant: ["tabular-nums"],
+              }}
+            >
+              {action.amount}
+            </Text>
+            <Text
+              className="text-lg font-bold ml-2 tracking-wide"
+              style={{ color: tokens.colors.accent.cyan }}
+            >
+              {action.coin}
+            </Text>
           </View>
         </Animated.View>
 
         {/* Details Grid */}
-        <Animated.View style={[styles.detailsContainer, { opacity: fadeAnim }]}>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>STATUS</Text>
+        <Animated.View
+          className="p-5 rounded-sm border"
+          style={{
+            opacity: fadeAnim,
+            backgroundColor: tokens.colors.bg.secondary,
+            borderColor: tokens.colors.border.default,
+          }}
+        >
+          <View className="flex-row justify-between items-center py-3">
+            <Text
+              className="text-[11px] font-bold tracking-[2px]"
+              style={{ color: tokens.colors.text.tertiary }}
+            >
+              STATUS
+            </Text>
             <View
-              style={[
-                styles.statusBadge,
-                isCompleted
-                  ? action.status === "approved"
-                    ? styles.statusApproved
-                    : styles.statusRejected
-                  : isExpired
-                    ? styles.statusExpired
-                    : isUrgent
-                      ? styles.statusUrgent
-                      : styles.statusPending,
-              ]}
+              className="px-3 py-1 rounded-sm border"
+              style={{
+                backgroundColor: getStatusBg(),
+                borderColor: getStatusBorderColor(),
+              }}
             >
               <Text
-                style={[
-                  styles.statusText,
-                  isCompleted
-                    ? action.status === "approved"
-                      ? { color: tokens.colors.accent.lime }
-                      : { color: tokens.colors.accent.crimson }
-                    : isExpired
-                      ? { color: tokens.colors.text.muted }
-                      : isUrgent
-                        ? { color: tokens.colors.accent.crimson }
-                        : { color: tokens.colors.accent.amber },
-                ]}
+                className="text-[10px] font-extrabold tracking-wide"
+                style={{ color: getStatusColor() }}
               >
-                {isCompleted
-                  ? action.status.toUpperCase()
-                  : isExpired
-                    ? "EXPIRED"
-                    : isUrgent
-                      ? "URGENT"
-                      : "PENDING"}
+                {getStatusText()}
               </Text>
             </View>
           </View>
 
-          <View style={styles.divider} />
+          <View className="h-px my-0" style={{ backgroundColor: tokens.colors.border.default }} />
 
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>EXPIRES IN</Text>
+          <View className="flex-row justify-between items-center py-3">
+            <Text
+              className="text-[11px] font-bold tracking-[2px]"
+              style={{ color: tokens.colors.text.tertiary }}
+            >
+              EXPIRES IN
+            </Text>
             {!isExpired && !isCompleted ? (
-              <View style={styles.timerContainer}>
+              <View className="flex-row items-center">
                 <View
-                  style={[
-                    styles.timerDot,
-                    {
-                      backgroundColor: isUrgent
-                        ? tokens.colors.accent.crimson
-                        : tokens.colors.accent.lime,
-                    },
-                  ]}
+                  className="w-2 h-2 rounded-full mr-2"
+                  style={{
+                    backgroundColor: isUrgent
+                      ? tokens.colors.accent.crimson
+                      : tokens.colors.accent.lime,
+                    shadowOffset: { width: 0, height: 0 },
+                    shadowOpacity: 0.8,
+                    shadowRadius: 5,
+                  }}
                 />
                 <Text
-                  style={[styles.timerValue, isUrgent && { color: tokens.colors.accent.crimson }]}
+                  className="text-xl font-bold tracking-[2px]"
+                  style={{
+                    color: isUrgent ? tokens.colors.accent.crimson : tokens.colors.text.primary,
+                    fontVariant: ["tabular-nums"],
+                  }}
                 >
                   {minutesLeft.toString().padStart(2, "0")}:
                   {secondsLeft.toString().padStart(2, "0")}.{msLeft.toString().padStart(2, "0")}
                 </Text>
               </View>
             ) : (
-              <Text style={styles.expiredValue}>--:--.--</Text>
+              <Text
+                className="text-xl font-bold tracking-[2px]"
+                style={{
+                  color: tokens.colors.text.muted,
+                  fontVariant: ["tabular-nums"],
+                }}
+              >
+                --:--.--
+              </Text>
             )}
           </View>
 
-          <View style={styles.divider} />
+          <View className="h-px my-0" style={{ backgroundColor: tokens.colors.border.default }} />
 
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>TIMESTAMP</Text>
-            <Text style={styles.detailValue}>
+          <View className="flex-row justify-between items-center py-3">
+            <Text
+              className="text-[11px] font-bold tracking-[2px]"
+              style={{ color: tokens.colors.text.tertiary }}
+            >
+              TIMESTAMP
+            </Text>
+            <Text
+              className="text-sm font-semibold"
+              style={{
+                color: tokens.colors.text.secondary,
+                fontVariant: ["tabular-nums"],
+              }}
+            >
               {new Date(action.timestamp).toLocaleTimeString("en-US", {
                 hour: "2-digit",
                 minute: "2-digit",
@@ -298,38 +405,59 @@ export default function ApprovalDetailScreen() {
         </Animated.View>
 
         {/* Spacer */}
-        <View style={styles.spacer} />
+        <View className="h-8" />
       </ScrollView>
 
       {/* Action Buttons */}
       {!isCompleted && !isExpired && (
-        <Animated.View style={[styles.buttonsContainer, { opacity: fadeAnim }]}>
+        <Animated.View
+          className="absolute bottom-0 left-0 right-0 p-5 pb-8 border-t"
+          style={{
+            opacity: fadeAnim,
+            backgroundColor: tokens.colors.bg.primary,
+            borderTopColor: tokens.colors.border.default,
+          }}
+        >
           <ActionButtons
             onApprove={handleApprove}
             onReject={handleReject}
             disabled={isProcessing}
           />
-          <Text style={styles.authNote}>BIOMETRIC AUTHENTICATION REQUIRED</Text>
+          <Text
+            className="text-center text-[10px] font-bold tracking-[2px] mt-4"
+            style={{ color: tokens.colors.text.tertiary }}
+          >
+            BIOMETRIC AUTHENTICATION REQUIRED
+          </Text>
         </Animated.View>
       )}
 
       {isCompleted && (
-        <View style={styles.completedContainer}>
+        <View
+          className="absolute bottom-0 left-0 right-0 p-5 pb-8 border-t"
+          style={{
+            backgroundColor: tokens.colors.bg.primary,
+            borderTopColor: tokens.colors.border.default,
+          }}
+        >
           <View
-            style={[
-              styles.completedBox,
-              action.status === "approved"
-                ? { borderColor: tokens.colors.accent.lime }
-                : { borderColor: tokens.colors.accent.crimson },
-            ]}
+            className="py-5 items-center rounded-sm border-2"
+            style={{
+              backgroundColor: tokens.colors.bg.secondary,
+              borderColor:
+                action.status === "approved"
+                  ? tokens.colors.accent.lime
+                  : tokens.colors.accent.crimson,
+            }}
           >
             <Text
-              style={[
-                styles.completedText,
-                action.status === "approved"
-                  ? { color: tokens.colors.accent.lime }
-                  : { color: tokens.colors.accent.crimson },
-              ]}
+              className="text-base font-black tracking-[4px]"
+              style={{
+                color:
+                  action.status === "approved"
+                    ? tokens.colors.accent.lime
+                    : tokens.colors.accent.crimson,
+              }}
             >
               {action.status.toUpperCase()}
             </Text>
@@ -339,260 +467,3 @@ export default function ApprovalDetailScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: tokens.colors.bg.primary,
-  },
-  loading: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    fontSize: 14,
-    fontWeight: "700",
-    letterSpacing: 4,
-    color: tokens.colors.text.tertiary,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 200,
-  },
-  header: {
-    marginBottom: 32,
-  },
-  headerLabel: {
-    fontSize: 11,
-    fontWeight: "800",
-    letterSpacing: 3,
-    color: tokens.colors.text.tertiary,
-    marginBottom: 8,
-  },
-  idContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  idValue: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: tokens.colors.text.secondary,
-    letterSpacing: 1,
-    fontFamily: "monospace",
-  },
-  idEllipsis: {
-    fontSize: 14,
-    color: tokens.colors.text.tertiary,
-  },
-  iconContainer: {
-    alignItems: "center",
-    marginBottom: 32,
-  },
-  iconGlow: {
-    position: "absolute",
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 40,
-    elevation: 20,
-  },
-  iconBox: {
-    width: 100,
-    height: 100,
-    borderWidth: 2,
-    borderRadius: 2,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: tokens.colors.bg.secondary,
-  },
-  iconText: {
-    fontSize: 48,
-    fontWeight: "300",
-  },
-  actionBadge: {
-    marginTop: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderWidth: 1,
-    borderRadius: 2,
-    backgroundColor: tokens.colors.bg.secondary,
-  },
-  actionBadgeText: {
-    fontSize: 12,
-    fontWeight: "800",
-    letterSpacing: 2,
-  },
-  amountContainer: {
-    alignItems: "center",
-    marginBottom: 32,
-    backgroundColor: tokens.colors.bg.secondary,
-    borderWidth: 1,
-    borderColor: tokens.colors.border.default,
-    borderRadius: 2,
-    padding: 24,
-  },
-  amountLabel: {
-    fontSize: 10,
-    fontWeight: "800",
-    letterSpacing: 3,
-    color: tokens.colors.text.tertiary,
-    marginBottom: 12,
-  },
-  amountRow: {
-    flexDirection: "row",
-    alignItems: "baseline",
-  },
-  amountValue: {
-    fontSize: 42,
-    fontWeight: "800",
-    color: tokens.colors.text.primary,
-    letterSpacing: -1,
-    fontVariant: ["tabular-nums"],
-  },
-  amountCoin: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: tokens.colors.accent.cyan,
-    marginLeft: 8,
-    letterSpacing: 1,
-  },
-  detailsContainer: {
-    backgroundColor: tokens.colors.bg.secondary,
-    borderWidth: 1,
-    borderColor: tokens.colors.border.default,
-    borderRadius: 2,
-    padding: 20,
-  },
-  detailRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 12,
-  },
-  detailLabel: {
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 2,
-    color: tokens.colors.text.tertiary,
-  },
-  detailValue: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: tokens.colors.text.secondary,
-    fontVariant: ["tabular-nums"],
-  },
-  divider: {
-    height: 1,
-    backgroundColor: tokens.colors.border.default,
-  },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 2,
-    borderWidth: 1,
-  },
-  statusPending: {
-    backgroundColor: tokens.colors.accent.amberGlow,
-    borderColor: tokens.colors.accent.amber,
-  },
-  statusApproved: {
-    backgroundColor: tokens.colors.accent.limeGlow,
-    borderColor: tokens.colors.accent.lime,
-  },
-  statusRejected: {
-    backgroundColor: tokens.colors.accent.crimsonGlow,
-    borderColor: tokens.colors.accent.crimson,
-  },
-  statusExpired: {
-    backgroundColor: tokens.colors.bg.tertiary,
-    borderColor: tokens.colors.text.muted,
-  },
-  statusUrgent: {
-    backgroundColor: tokens.colors.accent.crimsonGlow,
-    borderColor: tokens.colors.accent.crimson,
-  },
-  statusText: {
-    fontSize: 10,
-    fontWeight: "800",
-    letterSpacing: 1,
-  },
-  timerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  timerDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 8,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 5,
-  },
-  timerValue: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: tokens.colors.text.primary,
-    fontVariant: ["tabular-nums"],
-    letterSpacing: 2,
-  },
-  expiredValue: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: tokens.colors.text.muted,
-    fontVariant: ["tabular-nums"],
-    letterSpacing: 2,
-  },
-  spacer: {
-    height: 32,
-  },
-  buttonsContainer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: tokens.colors.bg.primary,
-    borderTopWidth: 1,
-    borderTopColor: tokens.colors.border.default,
-    padding: 20,
-    paddingBottom: 32,
-  },
-  authNote: {
-    textAlign: "center",
-    fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 2,
-    color: tokens.colors.text.tertiary,
-    marginTop: 16,
-  },
-  completedContainer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: tokens.colors.bg.primary,
-    borderTopWidth: 1,
-    borderTopColor: tokens.colors.border.default,
-    padding: 20,
-    paddingBottom: 32,
-  },
-  completedBox: {
-    backgroundColor: tokens.colors.bg.secondary,
-    borderWidth: 2,
-    borderRadius: 2,
-    paddingVertical: 20,
-    alignItems: "center",
-  },
-  completedText: {
-    fontSize: 16,
-    fontWeight: "900",
-    letterSpacing: 4,
-  },
-});

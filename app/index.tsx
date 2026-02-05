@@ -1,21 +1,28 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, RefreshControl, TouchableOpacity } from 'react-native';
+import React, { useEffect } from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  RefreshControl,
+  TouchableOpacity,
+} from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '../hooks/useAuth';
-import { useApprovals } from '../hooks/useApprovals';
+import { useApprovalsQuery } from '../hooks/useApprovalsQuery';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { ApprovalCard } from '../components/ApprovalCard';
-import { ApprovalAction } from '../types';
+import type { ApprovalAction } from '../types';
 
 export default function PendingApprovalsScreen() {
   const { deviceToken, isLoading: authLoading, isRegistered } = useAuth();
-  const { 
-    pendingApprovals, 
-    isLoading: approvalsLoading, 
-    fetchPendingApprovals 
-  } = useApprovals({ deviceToken });
+  const {
+    pendingApprovals,
+    isLoading: approvalsLoading,
+    isRefetching,
+    refetch,
+    error,
+  } = useApprovalsQuery(deviceToken);
   const { permissionStatus, requestPermissions } = usePushNotifications();
-  const [refreshing, setRefreshing] = useState(false);
 
   // Check for notification permissions on first load
   useEffect(() => {
@@ -25,9 +32,7 @@ export default function PendingApprovalsScreen() {
   }, [permissionStatus, requestPermissions]);
 
   const onRefresh = async () => {
-    setRefreshing(true);
-    await fetchPendingApprovals();
-    setRefreshing(false);
+    await refetch();
   };
 
   const handleApprovalPress = (approval: ApprovalAction) => {
@@ -55,10 +60,10 @@ export default function PendingApprovalsScreen() {
           Welcome to OpenClaw
         </Text>
         <Text className="text-zinc-400 text-base text-center mb-8 leading-6">
-          Your voice and remote approval companion.{'\n'}
+          Your voice and remote approval companion.{"\n"}
           Get notified when actions need your approval.
         </Text>
-        
+
         {!permissionStatus || permissionStatus !== 'granted' ? (
           <TouchableOpacity
             onPress={requestPermissions}
@@ -72,10 +77,12 @@ export default function PendingApprovalsScreen() {
         ) : (
           <View className="items-center">
             <View className="bg-green-500/20 rounded-full px-4 py-2 mb-4">
-              <Text className="text-green-500 font-medium">Notifications enabled</Text>
+              <Text className="text-green-500 font-medium">
+                Notifications enabled
+              </Text>
             </View>
             <Text className="text-zinc-500 text-sm text-center">
-              You're all set!{'\n'}
+              You're all set!{"\n"}
               Waiting for approval requests...
             </Text>
           </View>
@@ -89,18 +96,35 @@ export default function PendingApprovalsScreen() {
       {/* Header Stats */}
       <View className="flex-row px-4 pt-4 pb-2 gap-3">
         <View className="flex-1 bg-zinc-900 rounded-xl p-4">
-          <Text className="text-zinc-500 text-xs uppercase tracking-wide">Pending</Text>
-          <Text className="text-white text-2xl font-bold mt-1">{pendingApprovals.length}</Text>
+          <Text className="text-zinc-500 text-xs uppercase tracking-wide">
+            Pending
+          </Text>
+          <Text className="text-white text-2xl font-bold mt-1">
+            {pendingApprovals.length}
+          </Text>
         </View>
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={navigateToHistory}
           className="flex-1 bg-zinc-900 rounded-xl p-4"
           activeOpacity={0.7}
         >
-          <Text className="text-zinc-500 text-xs uppercase tracking-wide">History</Text>
+          <Text className="text-zinc-500 text-xs uppercase tracking-wide">
+            History
+          </Text>
           <Text className="text-white text-2xl font-bold mt-1">View →</Text>
         </TouchableOpacity>
       </View>
+
+      {error ? (
+        <View className="px-4 pt-2">
+          <View className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
+            <Text className="text-red-400 font-semibold mb-1">
+              Failed to load approvals
+            </Text>
+            <Text className="text-zinc-400 text-sm">{error}</Text>
+          </View>
+        </View>
+      ) : null}
 
       {/* Approvals List */}
       <FlatList<ApprovalAction>
@@ -114,7 +138,7 @@ export default function PendingApprovalsScreen() {
         contentContainerStyle={{ paddingTop: 8, paddingBottom: 100 }}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
+            refreshing={isRefetching || isLoading}
             onRefresh={onRefresh}
             tintColor="#ffffff"
           />
@@ -128,12 +152,13 @@ export default function PendingApprovalsScreen() {
               No pending approvals
             </Text>
             <Text className="text-zinc-500 text-base text-center">
-              When actions need your approval,{'\n'}they'll appear here.
+              When actions need your approval,{"\n"}they'll appear here.
             </Text>
             <TouchableOpacity
               onPress={onRefresh}
               className="mt-6 bg-zinc-900 rounded-xl py-3 px-6"
               activeOpacity={0.7}
+              disabled={isLoading}
             >
               <Text className="text-white font-medium">Refresh</Text>
             </TouchableOpacity>
@@ -147,11 +172,19 @@ export default function PendingApprovalsScreen() {
           <Text className="text-white text-2xl mb-1">📋</Text>
           <Text className="text-white text-xs font-medium">Pending</Text>
         </TouchableOpacity>
-        <TouchableOpacity className="items-center" onPress={navigateToHistory} activeOpacity={0.7}>
+        <TouchableOpacity
+          className="items-center"
+          onPress={navigateToHistory}
+          activeOpacity={0.7}
+        >
           <Text className="text-zinc-500 text-2xl mb-1">📜</Text>
           <Text className="text-zinc-500 text-xs">History</Text>
         </TouchableOpacity>
-        <TouchableOpacity className="items-center" onPress={navigateToSettings} activeOpacity={0.7}>
+        <TouchableOpacity
+          className="items-center"
+          onPress={navigateToSettings}
+          activeOpacity={0.7}
+        >
           <Text className="text-zinc-500 text-2xl mb-1">⚙️</Text>
           <Text className="text-zinc-500 text-xs">Settings</Text>
         </TouchableOpacity>

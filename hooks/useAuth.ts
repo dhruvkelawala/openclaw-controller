@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import * as SecureStore from 'expo-secure-store';
-import { ENV } from '../lib/env';
 import { logger } from '../lib/logger';
+import { registerDevice as registerDeviceApi } from '../lib/api';
 
 const DEVICE_TOKEN_KEY = 'openclaw_device_token';
 
@@ -34,22 +34,13 @@ export function useAuth() {
   // Register device with backend
   const registerDevice = useCallback(async (token: string): Promise<boolean> => {
     try {
-      const response = await fetch(`${ENV.BACKEND_URL}/devices/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Device-Token': token,
-        },
-        body: JSON.stringify({ token }),
-      });
-
-      if (response.ok) {
+      const ok = await registerDeviceApi(token);
+      if (ok) {
         logger.log('Device registered successfully');
-        return true;
+      } else {
+        logger.error('Device registration failed');
       }
-
-      logger.error('Device registration failed:', response.status);
-      return false;
+      return ok;
     } catch (error) {
       logger.error('Error registering device:', error);
       return false;

@@ -128,7 +128,12 @@ The app communicates with the OpenClaw backend at `https://openclaw-prod.tailbc9
     },
     "plugins": [
       "expo-router",
-      ["expo-notifications", { /* config */ }]
+      [
+        "expo-notifications",
+        {
+          /* config */
+        }
+      ]
     ]
   }
 }

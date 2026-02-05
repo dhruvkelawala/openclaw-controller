@@ -1,25 +1,31 @@
-import React from 'react';
-import { View, Text, FlatList, TouchableOpacity } from 'react-native';
-import { router } from 'expo-router';
-import { useApprovalsStore } from '../store/approvalsStore';
-import { ApprovalAction } from '../types';
+import React from "react";
+import { View, Text, FlatList, TouchableOpacity } from "react-native";
+import { router } from "expo-router";
+import { useApprovalsStore } from "../store/approvalsStore";
+import { ApprovalAction } from "../types";
 
 function HistoryCard({ action, onPress }: { action: ApprovalAction; onPress: () => void }) {
-  const formattedDate = new Date(action.timestamp).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+  const formattedDate = new Date(action.timestamp).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 
   const getActionColor = () => {
     switch (action.action) {
-      case 'swap': return 'text-blue-400';
-      case 'transfer': return 'text-green-400';
-      case 'trade': return 'text-purple-400';
-      case 'stake': return 'text-yellow-400';
-      case 'unstake': return 'text-orange-400';
-      default: return 'text-gray-400';
+      case "swap":
+        return "text-blue-400";
+      case "transfer":
+        return "text-green-400";
+      case "trade":
+        return "text-purple-400";
+      case "stake":
+        return "text-yellow-400";
+      case "unstake":
+        return "text-orange-400";
+      default:
+        return "text-gray-400";
     }
   };
 
@@ -31,33 +37,33 @@ function HistoryCard({ action, onPress }: { action: ApprovalAction; onPress: () 
     >
       <View className="flex-row justify-between items-start">
         <View className="flex-row items-center">
-          <View className={`w-10 h-10 rounded-lg items-center justify-center mr-3 ${
-            action.status === 'approved' ? 'bg-green-500/20' : 'bg-red-500/20'
-          }`}>
-            <Text className="text-lg">
-              {action.status === 'approved' ? '✓' : '✕'}
-            </Text>
+          <View
+            className={`w-10 h-10 rounded-lg items-center justify-center mr-3 ${
+              action.status === "approved" ? "bg-green-500/20" : "bg-red-500/20"
+            }`}
+          >
+            <Text className="text-lg">{action.status === "approved" ? "✓" : "✕"}</Text>
           </View>
           <View>
-            <Text className="text-white font-semibold text-base">
-              {action.coin}
-            </Text>
+            <Text className="text-white font-semibold text-base">{action.coin}</Text>
             <Text className={`text-sm ${getActionColor()}`}>
               {action.action.charAt(0).toUpperCase() + action.action.slice(1)}
             </Text>
           </View>
         </View>
-        
+
         <View className="items-end">
           <Text className="text-white font-bold text-lg">{action.amount}</Text>
           <Text className="text-zinc-500 text-xs">{formattedDate}</Text>
         </View>
       </View>
-      
+
       <View className="mt-3 pt-3 border-t border-zinc-800 flex-row justify-between items-center">
-        <Text className={`text-sm font-medium ${
-          action.status === 'approved' ? 'text-green-500' : 'text-red-500'
-        }`}>
+        <Text
+          className={`text-sm font-medium ${
+            action.status === "approved" ? "text-green-500" : "text-red-500"
+          }`}
+        >
           {action.status.charAt(0).toUpperCase() + action.status.slice(1)}
         </Text>
         <Text className="text-zinc-600 text-xs">Tap to view details</Text>
@@ -71,7 +77,7 @@ export default function HistoryScreen() {
 
   const handleClearHistory = () => {
     if (history.length === 0) return;
-    
+
     // Could add an Alert confirmation here
     clearHistory();
   };
@@ -95,13 +101,13 @@ export default function HistoryScreen() {
         <View className="flex-1 bg-zinc-900 rounded-xl p-4">
           <Text className="text-zinc-500 text-xs uppercase tracking-wide">Approved</Text>
           <Text className="text-green-500 text-2xl font-bold mt-1">
-            {history.filter(a => a.status === 'approved').length}
+            {history.filter((a) => a.status === "approved").length}
           </Text>
         </View>
         <View className="flex-1 bg-zinc-900 rounded-xl p-4">
           <Text className="text-zinc-500 text-xs uppercase tracking-wide">Rejected</Text>
           <Text className="text-red-500 text-2xl font-bold mt-1">
-            {history.filter(a => a.status === 'rejected').length}
+            {history.filter((a) => a.status === "rejected").length}
           </Text>
         </View>
       </View>
@@ -121,11 +127,9 @@ export default function HistoryScreen() {
             <View className="w-16 h-16 bg-zinc-900 rounded-full items-center justify-center mb-4">
               <Text className="text-3xl">📜</Text>
             </View>
-            <Text className="text-white text-lg font-semibold mb-2">
-              No history yet
-            </Text>
+            <Text className="text-white text-lg font-semibold mb-2">No history yet</Text>
             <Text className="text-zinc-500 text-base text-center">
-              Your approved and rejected actions{'\n'}will appear here.
+              Your approved and rejected actions{"\n"}will appear here.
             </Text>
           </View>
         }
@@ -154,7 +158,11 @@ export default function HistoryScreen() {
           <Text className="text-white text-2xl mb-1">📜</Text>
           <Text className="text-white text-xs font-medium">History</Text>
         </TouchableOpacity>
-        <TouchableOpacity className="items-center" onPress={() => router.push('/settings')} activeOpacity={0.7}>
+        <TouchableOpacity
+          className="items-center"
+          onPress={() => router.push("/settings")}
+          activeOpacity={0.7}
+        >
           <Text className="text-zinc-500 text-2xl mb-1">⚙️</Text>
           <Text className="text-zinc-500 text-xs">Settings</Text>
         </TouchableOpacity>

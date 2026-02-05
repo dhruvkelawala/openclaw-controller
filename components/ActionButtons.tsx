@@ -1,6 +1,15 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
-import * as LocalAuthentication from 'expo-local-authentication';
+import React, { useState, useRef } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+  Animated,
+  StyleSheet,
+} from "react-native";
+import * as LocalAuthentication from "expo-local-authentication";
+import { tokens } from "../lib/design-tokens";
 
 interface ActionButtonsProps {
   onApprove: () => Promise<boolean>;
@@ -12,39 +21,77 @@ export function ActionButtons({ onApprove, onReject, disabled = false }: ActionB
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
 
-  const authenticateAndExecute = async (action: () => Promise<boolean>, actionName: string) => {
+  // Animation values
+  const approveScale = useRef(new Animated.Value(1)).current;
+  const rejectScale = useRef(new Animated.Value(1)).current;
+  const approveGlow = useRef(new Animated.Value(0)).current;
+  const rejectGlow = useRef(new Animated.Value(0)).current;
+
+  const animatePress = (scale: Animated.Value, glow: Animated.Value) => {
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(scale, {
+          toValue: 0.95,
+          duration: 50,
+          useNativeDriver: true,
+        }),
+        Animated.timing(glow, {
+          toValue: 1,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.parallel([
+        Animated.timing(scale, {
+          toValue: 1,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(glow, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start();
+  };
+
+  const authenticateAndExecute = async (
+    action: () => Promise<boolean>,
+    actionName: string,
+    scaleAnim: Animated.Value,
+    glowAnim: Animated.Value
+  ) => {
+    animatePress(scaleAnim, glowAnim);
     setIsAuthenticating(true);
-    
+
     try {
-      // Check if device supports biometric authentication
       const hasHardware = await LocalAuthentication.hasHardwareAsync();
       const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-      
+
       if (!hasHardware || !isEnrolled) {
-        // Fall back to simple confirmation if biometrics not available
         Alert.alert(
-          'Confirm Action',
+          "CONFIRM ACTION",
           `Are you sure you want to ${actionName.toLowerCase()} this action?`,
           [
-            { text: 'Cancel', style: 'cancel' },
-            { 
-              text: actionName, 
+            { text: "CANCEL", style: "cancel" },
+            {
+              text: actionName.toUpperCase(),
               onPress: async () => {
                 setIsLoading(true);
                 await action();
                 setIsLoading(false);
-              }
+              },
             },
           ]
         );
         return;
       }
 
-      // Attempt biometric authentication
       const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: `Authenticate to ${actionName}`,
-        fallbackLabel: 'Use Passcode',
-        cancelLabel: 'Cancel',
+        promptMessage: `AUTHENTICATE TO ${actionName.toUpperCase()}`,
+        fallbackLabel: "Use Passcode",
+        cancelLabel: "Cancel",
         disableDeviceFallback: false,
       });
 
@@ -53,16 +100,15 @@ export function ActionButtons({ onApprove, onReject, disabled = false }: ActionB
         setIsLoading(true);
         const success = await action();
         if (!success) {
-          Alert.alert('Error', `Failed to ${actionName.toLowerCase()} the action. Please try again.`);
+          Alert.alert(
+            "ERROR",
+            `Failed to ${actionName.toLowerCase()} the action. Please try again.`
+          );
         }
         setIsLoading(false);
-      } else {
-        // Authentication cancelled or failed
-        console.log('Authentication cancelled or failed');
       }
-    } catch (error) {
-      console.error('Authentication error:', error);
-      Alert.alert('Error', 'Authentication failed. Please try again.');
+    } catch {
+      Alert.alert("ERROR", "Authentication failed. Please try again.");
     } finally {
       setIsAuthenticating(false);
     }
@@ -70,11 +116,11 @@ export function ActionButtons({ onApprove, onReject, disabled = false }: ActionB
 
   if (isLoading || isAuthenticating) {
     return (
-      <View className="flex-row gap-3">
-        <View className="flex-1 bg-zinc-800 rounded-xl py-4 items-center justify-center">
-          <ActivityIndicator color="#ffffff" />
-          <Text className="text-zinc-400 text-sm mt-2">
-            {isAuthenticating ? 'Authenticating...' : 'Processing...'}
+      <View style={styles.loadingContainer}>
+        <View style={styles.loadingBox}>
+          <ActivityIndicator color={tokens.colors.accent.cyan} size="large" />
+          <Text style={styles.loadingText}>
+            {isAuthenticating ? "AUTHENTICATING..." : "PROCESSING..."}
           </Text>
         </View>
       </View>
@@ -82,24 +128,136 @@ export function ActionButtons({ onApprove, onReject, disabled = false }: ActionB
   }
 
   return (
-    <View className="flex-row gap-3">
-      <TouchableOpacity
-        onPress={() => authenticateAndExecute(onReject, 'Reject')}
-        disabled={disabled}
-        className={`flex-1 bg-red-500/20 rounded-xl py-4 items-center border border-red-500/30 ${disabled ? 'opacity-50' : ''}`}
-        activeOpacity={0.7}
-      >
-        <Text className="text-red-500 font-semibold text-base">Reject</Text>
-      </TouchableOpacity>
-      
-      <TouchableOpacity
-        onPress={() => authenticateAndExecute(onApprove, 'Approve')}
-        disabled={disabled}
-        className={`flex-1 bg-green-500/20 rounded-xl py-4 items-center border border-green-500/30 ${disabled ? 'opacity-50' : ''}`}
-        activeOpacity={0.7}
-      >
-        <Text className="text-green-500 font-semibold text-base">Approve</Text>
-      </TouchableOpacity>
+    <View style={styles.container}>
+      {/* Reject Button */}
+      <Animated.View style={[styles.buttonWrapper, { transform: [{ scale: rejectScale }] }]}>
+        <Animated.View
+          style={[
+            styles.glowOverlay,
+            styles.rejectGlow,
+            {
+              opacity: rejectGlow,
+              shadowColor: tokens.colors.accent.crimson,
+            },
+          ]}
+        />
+        <TouchableOpacity
+          onPress={() => authenticateAndExecute(onReject, "REJECT", rejectScale, rejectGlow)}
+          disabled={disabled}
+          style={[styles.button, styles.rejectButton, disabled && styles.disabled]}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.rejectText}>REJECT</Text>
+          <View style={styles.buttonLine} />
+        </TouchableOpacity>
+      </Animated.View>
+
+      {/* Approve Button */}
+      <Animated.View style={[styles.buttonWrapper, { transform: [{ scale: approveScale }] }]}>
+        <Animated.View
+          style={[
+            styles.glowOverlay,
+            styles.approveGlow,
+            {
+              opacity: approveGlow,
+              shadowColor: tokens.colors.accent.lime,
+            },
+          ]}
+        />
+        <TouchableOpacity
+          onPress={() => authenticateAndExecute(onApprove, "APPROVE", approveScale, approveGlow)}
+          disabled={disabled}
+          style={[styles.button, styles.approveButton, disabled && styles.disabled]}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.approveText}>APPROVE</Text>
+          <View style={styles.buttonLine} />
+        </TouchableOpacity>
+      </Animated.View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  buttonWrapper: {
+    flex: 1,
+    position: "relative",
+  },
+  glowOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 2,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  approveGlow: {
+    backgroundColor: tokens.colors.accent.limeGlow,
+  },
+  rejectGlow: {
+    backgroundColor: tokens.colors.accent.crimsonGlow,
+  },
+  button: {
+    paddingVertical: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 2,
+    borderWidth: 2,
+    position: "relative",
+    overflow: "hidden",
+  },
+  approveButton: {
+    backgroundColor: tokens.colors.bg.secondary,
+    borderColor: tokens.colors.accent.lime,
+  },
+  rejectButton: {
+    backgroundColor: tokens.colors.bg.secondary,
+    borderColor: tokens.colors.accent.crimson,
+  },
+  disabled: {
+    opacity: 0.4,
+  },
+  approveText: {
+    color: tokens.colors.accent.lime,
+    fontSize: 14,
+    fontWeight: "900",
+    letterSpacing: 2,
+  },
+  rejectText: {
+    color: tokens.colors.accent.crimson,
+    fontSize: 14,
+    fontWeight: "900",
+    letterSpacing: 2,
+  },
+  buttonLine: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+  },
+  loadingContainer: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  loadingBox: {
+    flex: 1,
+    backgroundColor: tokens.colors.bg.secondary,
+    borderWidth: 1,
+    borderColor: tokens.colors.border.default,
+    borderRadius: 2,
+    paddingVertical: 24,
+    alignItems: "center",
+  },
+  loadingText: {
+    color: tokens.colors.text.secondary,
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 1,
+    marginTop: 12,
+  },
+});

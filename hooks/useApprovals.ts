@@ -1,20 +1,19 @@
-/**
- * @deprecated Use `usePendingApprovals`, `useApproveAction`, and `useRejectAction` from `useApprovalsQuery.ts` instead.
- * This file is kept for backward compatibility but will be removed in a future version.
- */
-
-import { useState, useCallback, useEffect } from "react";
-import { useApprovalsStore } from "../store/approvalsStore";
-import { ApprovalAction } from "../schemas";
-import { BACKEND_URL } from "../lib/constants";
+import { useState, useCallback, useEffect } from 'react';
+import { useApprovalsStore } from '../store/approvalsStore';
+import { ApprovalAction } from '../types';
+import { ENV } from '../lib/env';
+import { PendingApprovalsResponseSchema, ActionTypeSchema } from '../lib/schemas';
+import { logger } from '../lib/logger';
 
 interface UseApprovalsOptions {
   deviceToken: string | null;
 }
 
-/**
- * @deprecated Use `usePendingApprovals` from `useApprovalsQuery.ts` instead.
- */
+function toActionType(value: string): ApprovalAction['action'] {
+  const parsed = ActionTypeSchema.safeParse(value);
+  return parsed.success ? parsed.data : 'other';
+}
+
 export function useApprovals({ deviceToken }: UseApprovalsOptions) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,9 +34,9 @@ export function useApprovals({ deviceToken }: UseApprovalsOptions) {
     setError(null);
 
     try {
-      const response = await fetch(`${BACKEND_URL}/pushcut/status`, {
+      const response = await fetch(`${ENV.BACKEND_URL}/pushcut/status`, {
         headers: {
-          "X-Device-Token": deviceToken,
+          'X-Device-Token': deviceToken,
         },
       });
 
@@ -45,26 +44,30 @@ export function useApprovals({ deviceToken }: UseApprovalsOptions) {
         throw new Error(`Failed to fetch: ${response.status}`);
       }
 
-      const data = await response.json();
+      const rawData: unknown = await response.json();
+      const parsed = PendingApprovalsResponseSchema.safeParse(rawData);
 
-      // Transform backend response to ApprovalAction format
-      const approvals: ApprovalAction[] = data.map((item: Record<string, unknown>) => ({
-        id: (item.actionId as string) || (item.id as string),
-        coin: item.coin as string,
-        action: item.action as ApprovalAction["action"],
-        amount: item.amount as string,
-        expiry: item.expiry as number,
-        approveUrl: (item.approveUrl as string) || `${BACKEND_URL}/approve`,
-        rejectUrl: (item.rejectUrl as string) || `${BACKEND_URL}/reject`,
-        status: "pending" as const,
+      if (!parsed.success) {
+        throw new Error(`Invalid response: ${parsed.error.message}`);
+      }
+
+      const approvals: ApprovalAction[] = parsed.data.map((item) => ({
+        id: item.actionId ?? item.id ?? crypto.randomUUID(),
+        coin: item.coin,
+        action: toActionType(item.action),
+        amount: item.amount,
+        expiry: item.expiry,
+        approveUrl: item.approveUrl ?? `${ENV.BACKEND_URL}/approve`,
+        rejectUrl: item.rejectUrl ?? `${ENV.BACKEND_URL}/reject`,
+        status: 'pending',
         timestamp: Date.now(),
       }));
 
       setPendingApprovals(approvals);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       setError(errorMessage);
-      console.error("Error fetching pending approvals:", err);
+      logger.error('Error fetching pending approvals:', err);
     } finally {
       setIsLoading(false);
     }
@@ -81,14 +84,14 @@ export function useApprovals({ deviceToken }: UseApprovalsOptions) {
       try {
         const action = pendingApprovals.find((a) => a.id === actionId);
         if (!action) {
-          throw new Error("Action not found");
+          throw new Error('Action not found');
         }
 
         const response = await fetch(action.approveUrl, {
-          method: "POST",
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
-            "X-Device-Token": deviceToken,
+            'Content-Type': 'application/json',
+            'X-Device-Token': deviceToken,
           },
           body: JSON.stringify({ token: deviceToken, actionId }),
         });
@@ -96,13 +99,13 @@ export function useApprovals({ deviceToken }: UseApprovalsOptions) {
         if (response.ok) {
           storeApproveAction(actionId);
           return true;
-        } else {
-          throw new Error(`Approval failed: ${response.status}`);
         }
+
+        throw new Error(`Approval failed: ${response.status}`);
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Unknown error";
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
         setError(errorMessage);
-        console.error("Error approving action:", err);
+        logger.error('Error approving action:', err);
         return false;
       } finally {
         setIsLoading(false);
@@ -122,14 +125,14 @@ export function useApprovals({ deviceToken }: UseApprovalsOptions) {
       try {
         const action = pendingApprovals.find((a) => a.id === actionId);
         if (!action) {
-          throw new Error("Action not found");
+          throw new Error('Action not found');
         }
 
         const response = await fetch(action.rejectUrl, {
-          method: "POST",
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
-            "X-Device-Token": deviceToken,
+            'Content-Type': 'application/json',
+            'X-Device-Token': deviceToken,
           },
           body: JSON.stringify({ token: deviceToken, actionId }),
         });
@@ -137,13 +140,13 @@ export function useApprovals({ deviceToken }: UseApprovalsOptions) {
         if (response.ok) {
           storeRejectAction(actionId);
           return true;
-        } else {
-          throw new Error(`Rejection failed: ${response.status}`);
         }
+
+        throw new Error(`Rejection failed: ${response.status}`);
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Unknown error";
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
         setError(errorMessage);
-        console.error("Error rejecting action:", err);
+        logger.error('Error rejecting action:', err);
         return false;
       } finally {
         setIsLoading(false);

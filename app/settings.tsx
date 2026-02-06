@@ -7,21 +7,20 @@ import { BottomNav } from '../components/BottomNav';
 
 export default function SettingsScreen() {
   const { deviceToken, reRegister, isRegistered } = useAuth();
-  const { sendTestNotification, permissionStatus, requestPermissions } =
-    usePushNotifications();
+  // Push notifications disabled for local testing without Apple Developer Program
+  // const { sendTestNotification, permissionStatus, requestPermissions } =
+  //   usePushNotifications();
+  const permissionStatus = 'denied' as const;
+  const requestPermissions = async () => false;
+  const sendTestNotification = async () => {};
   const { clearHistory } = useApprovalsStore();
 
   const handleTestNotification = async () => {
-    if (permissionStatus !== 'granted') {
-      Alert.alert('Permissions Required', 'Please enable push notifications to test.', [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Enable', onPress: requestPermissions },
-      ]);
-      return;
-    }
-
-    await sendTestNotification();
-    Alert.alert('Test Sent', 'Check your notifications!');
+    Alert.alert(
+      'Notifications Disabled',
+      'Push notifications are disabled for local testing without Apple Developer Program.',
+      [{ text: 'OK' }]
+    );
   };
 
   const handleClearHistory = () => {
@@ -85,45 +84,27 @@ export default function SettingsScreen() {
           <Text className="text-zinc-500 text-sm mt-1">Version 1.0.0</Text>
         </View>
 
-        {/* Notifications Section */}
+        {/* Notifications Section - Disabled for local testing */}
         <View className="mb-6">
           <Text className="text-zinc-500 text-xs uppercase tracking-wide mb-3 ml-1">
             Notifications
           </Text>
           <View className="bg-zinc-900 rounded-xl overflow-hidden">
-            <TouchableOpacity
-              onPress={requestPermissions}
+            <View
               className="flex-row justify-between items-center p-4 border-b border-zinc-800"
-              activeOpacity={0.7}
             >
               <Text className="text-white text-base">Push Notifications</Text>
-              <View
-                className={`px-3 py-1 rounded-full ${
-                  permissionStatus === 'granted'
-                    ? 'bg-green-500/20'
-                    : 'bg-red-500/20'
-                }`}
-              >
-                <Text
-                  className={`text-sm ${
-                    permissionStatus === 'granted'
-                      ? 'text-green-500'
-                      : 'text-red-500'
-                  }`}
-                >
-                  {permissionStatus === 'granted' ? 'Enabled' : 'Disabled'}
-                </Text>
+              <View className="px-3 py-1 rounded-full bg-yellow-500/20">
+                <Text className="text-sm text-yellow-500">Disabled</Text>
               </View>
-            </TouchableOpacity>
+            </View>
 
-            <TouchableOpacity
-              onPress={handleTestNotification}
-              className="flex-row justify-between items-center p-4"
-              activeOpacity={0.7}
-            >
-              <Text className="text-white text-base">Send Test Notification</Text>
-              <Text className="text-zinc-500">→</Text>
-            </TouchableOpacity>
+            <View className="p-4">
+              <Text className="text-zinc-400 text-sm">
+                Push notifications are disabled for local UX testing without Apple Developer Program.
+                Pull down on the main screen to refresh for new approvals.
+              </Text>
+            </View>
           </View>
         </View>
 

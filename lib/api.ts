@@ -102,18 +102,25 @@ export async function rejectAction(params: {
   );
 }
 
-export async function registerDevice(deviceToken: string): Promise<boolean> {
-  try {
-    await fetchWithAuth(
-      `${ENV.BACKEND_URL}/devices/register`,
-      {
-        method: 'POST',
-        body: JSON.stringify({ token: deviceToken }),
-      },
-      deviceToken
-    );
-    return true;
-  } catch {
-    return false;
-  }
+// Device registration disabled - used for push notifications
+// export async function registerDevice(deviceToken: string): Promise<boolean> {
+//   try {
+//     await fetchWithAuth(
+//       `${ENV.BACKEND_URL}/devices/register`,
+//       {
+//         method: 'POST',
+//         body: JSON.stringify({ token: deviceToken }),
+//       },
+//       deviceToken
+//     );
+//     return true;
+//   } catch {
+//     return false;
+//   }
+// }
+
+// Stub for local testing without push notifications
+export async function registerDevice(_deviceToken: string): Promise<boolean> {
+  // Device registration disabled for local testing without Apple Developer Program
+  return true;
 }

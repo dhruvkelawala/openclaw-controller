@@ -17,26 +17,28 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.dhruvkelawala.openclaw-controller",
       "infoPlist": {
-        "NSFaceIDUsageDescription": "This app uses Face ID to authenticate approval actions.",
-        "UIBackgroundModes": ["remote-notification"]
+        "NSFaceIDUsageDescription": "This app uses Face ID to authenticate approval actions."
+        // Push notifications disabled for local testing without Apple Developer Program
+        // "UIBackgroundModes": ["remote-notification"]
       }
     },
     "plugins": [
       "expo-router",
-      "expo-dev-client",
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/notification-icon.png",
-          "color": "#ffffff",
-          "defaultChannel": "default",
-          "sounds": [
-            "./assets/sumo-notification-kimi.wav",
-            "./assets/sumo-notification-opus.wav",
-            "./assets/sumo-notification-codex.wav"
-          ]
-        }
-      ]
+      "expo-dev-client"
+      // Push notifications plugin disabled for local testing without Apple Developer Program
+      // [
+      //   "expo-notifications",
+      //   {
+      //     "icon": "./assets/notification-icon.png",
+      //     "color": "#ffffff",
+      //     "defaultChannel": "default",
+      //     "sounds": [
+      //       "./assets/sumo-notification-kimi.wav",
+      //       "./assets/sumo-notification-opus.wav",
+      //       "./assets/sumo-notification-codex.wav"
+      //     ]
+      //   }
+      // ]
     ],
     "scheme": "openclaw",
     "extra": {

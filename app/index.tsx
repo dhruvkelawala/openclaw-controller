@@ -24,14 +24,18 @@ export default function PendingApprovalsScreen() {
     refetch,
     error,
   } = useApprovalsQuery(deviceToken);
-  const { permissionStatus, requestPermissions } = usePushNotifications();
+  
+  // Push notifications disabled for local testing without Apple Developer Program
+  // const { permissionStatus, requestPermissions } = usePushNotifications();
+  const permissionStatus = 'denied' as const;
+  const requestPermissions = async () => false;
 
-  // Check for notification permissions on first load
-  useEffect(() => {
-    if (permissionStatus === null) {
-      requestPermissions();
-    }
-  }, [permissionStatus, requestPermissions]);
+  // Check for notification permissions on first load - disabled
+  // useEffect(() => {
+  //   if (permissionStatus === null) {
+  //     requestPermissions();
+  //   }
+  // }, [permissionStatus, requestPermissions]);
 
   const onRefresh = async () => {
     await refetch();
@@ -62,29 +66,18 @@ export default function PendingApprovalsScreen() {
           Get notified when actions need your approval.
         </Text>
 
-        {!permissionStatus || permissionStatus !== 'granted' ? (
-          <TouchableOpacity
-            onPress={requestPermissions}
-            className="bg-white rounded-xl py-4 px-8 w-full"
-            activeOpacity={0.8}
-          >
-            <Text className="text-black font-semibold text-base text-center">
-              Enable Push Notifications
-            </Text>
-          </TouchableOpacity>
-        ) : (
-          <View className="items-center">
-            <View className="bg-green-500/20 rounded-full px-4 py-2 mb-4">
-              <Text className="text-green-500 font-medium">
-                Notifications enabled
-              </Text>
-            </View>
-            <Text className="text-zinc-500 text-sm text-center">
-              You're all set!{"\n"}
-              Waiting for approval requests...
+        {/* Push notifications disabled for local testing without Apple Developer Program */}
+        <View className="items-center">
+          <View className="bg-yellow-500/20 rounded-full px-4 py-2 mb-4">
+            <Text className="text-yellow-500 font-medium">
+              Notifications disabled
             </Text>
           </View>
-        )}
+          <Text className="text-zinc-500 text-sm text-center">
+            Pull down to refresh for new approvals{"\n"}
+            (Push requires Apple Developer Program)
+          </Text>
+        </View>
       </View>
     );
   }

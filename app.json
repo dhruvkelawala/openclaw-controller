@@ -17,26 +17,12 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.dhruvkelawala.openclaw-controller",
       "infoPlist": {
-        "NSFaceIDUsageDescription": "This app uses Face ID to authenticate approval actions.",
-        "UIBackgroundModes": ["remote-notification"]
+        "NSFaceIDUsageDescription": "This app uses Face ID to authenticate approval actions."
       }
     },
     "plugins": [
       "expo-router",
-      "expo-dev-client",
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/notification-icon.png",
-          "color": "#ffffff",
-          "defaultChannel": "default",
-          "sounds": [
-            "./assets/sumo-notification-kimi.wav",
-            "./assets/sumo-notification-opus.wav",
-            "./assets/sumo-notification-codex.wav"
-          ]
-        }
-      ]
+      "expo-dev-client"
     ],
     "scheme": "openclaw",
     "extra": {
@@ -46,6 +32,25 @@
       "backendUrl": "https://openclaw-prod.tailbc93c6.ts.net",
       "eas": {
         "projectId": "your-project-id"
+      },
+      "_pushNotificationsDisabled": true,
+      "_disabledConfig": {
+        "_note": "Push notifications disabled for UX testing without Apple Developer Program",
+        "_iosInfoPlist": {
+          "UIBackgroundModes": ["remote-notification"]
+        },
+        "_plugins": [
+          ["expo-notifications", {
+            "icon": "./assets/notification-icon.png",
+            "color": "#ffffff",
+            "defaultChannel": "default",
+            "sounds": [
+              "./assets/sumo-notification-kimi.wav",
+              "./assets/sumo-notification-opus.wav",
+              "./assets/sumo-notification-codex.wav"
+            ]
+          }]
+        ]
       }
     }
   }

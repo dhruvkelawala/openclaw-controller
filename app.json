@@ -30,7 +30,11 @@
           "icon": "./assets/notification-icon.png",
           "color": "#ffffff",
           "defaultChannel": "default",
-          "sounds": ["./assets/notification-sound.wav"]
+          "sounds": [
+            "./assets/sumo-notification-kimi.wav",
+            "./assets/sumo-notification-opus.wav",
+            "./assets/sumo-notification-codex.wav"
+          ]
         }
       ]
     ],
